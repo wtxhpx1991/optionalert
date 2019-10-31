@@ -415,4 +415,4 @@ data = [
 parallel = Parallel("平行坐标系-默认指示器")
 parallel.config(schema)
 parallel.add("parallel", data, is_random=True)
-parallel..render(r"E:\program\pyecharts\平行坐标系.html")
+parallel.render(r"E:\program\pyecharts\平行坐标系.html")
