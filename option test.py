@@ -3,7 +3,9 @@ import pandas as pd
 import datetime as dt
 
 w.start()
-
+# 定义无风险利率以及股息率
+RISK_FREE_RATE = 0.025
+DIVIDEND_RATE = 0
 # 获取期权合约信息OptionContractRawData
 OptionContractNameRawData = w.wset("optioncontractbasicinfo", "exchange=sse;windcode=510050.SH;status=trading")
 OptionContractNameData = pd.DataFrame(OptionContractNameRawData.Data).T
@@ -21,3 +23,12 @@ OptionContractMinuteData.columns = OptionContractMinuteRawData.Fields
 OptionContractMinuteData['datetime'] = OptionContractMinuteRawData.Times
 OptionContractMinuteData['recodedate'] = OptionContractMinuteData['datetime'].map(lambda x: x.strftime('%Y-%m-%d'))
 OptionContractMinuteData['recodetime'] = OptionContractMinuteData['datetime'].map(lambda x: x.strftime('%H:%M:%S'))
+# 生成分析数据
+OptionContractData = pd.merge(OptionContractMinuteData, OptionContractNameData, left_on="windcode",
+                              right_on="wind_code", how="left")
+# 检验数据是否正确
+OptionContractDataTest = OptionContractData.groupby(by=["limit_month", "exercise_price", "call_or_put"]).size()
+# 每个合约数据相同
+OptionContractDataTest.min() == OptionContractDataTest.max()
+# 每个合约都有认沽认购
+OptionContractDataTest.count(level='call_or_put')[0] == OptionContractDataTest.count(level='call_or_put')[1]
