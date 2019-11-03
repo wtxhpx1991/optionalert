@@ -32,7 +32,7 @@ def EuropeanPutPrice(UnderlyingPrice, ExercisePrice, Time, InterestRate, Dividen
     result = ExercisePrice * np.exp(-InterestRate * Time) * nd2 - np.exp(-DividendRate * Time) * UnderlyingPrice * nd1
     return result
 
-
+# 求解欧式认购期权隐含波动率
 
 # 获取期权合约信息OptionContractRawData
 OptionContractNameRawData = w.wset("optioncontractbasicinfo", "exchange=sse;windcode=510050.SH;status=trading")
