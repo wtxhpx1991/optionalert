@@ -86,7 +86,7 @@ def TradeDateInterval(ArrLike, StartDate, EndDate):
 
 # 获取期权合约信息OptionContractRawData
 OptionContractNameRawData = w.wset("optioncontractbasicinfo", "exchange=sse;windcode=510050.SH;status=trading")
-# 全部合约w.wset("optioncontractbasicinfo","exchange=sse;windcode=510050.SH;status=all")
+# # 全部合约w.wset("optioncontractbasicinfo","exchange=sse;windcode=510050.SH;status=all")
 OptionContractNameData = pd.DataFrame(OptionContractNameRawData.Data).T
 OptionContractNameData.columns = OptionContractNameRawData.Fields
 OptionContractNameData['wind_code'] = OptionContractNameData['wind_code'].map(lambda x: str(x) + ".SH")
