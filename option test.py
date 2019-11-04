@@ -85,7 +85,7 @@ OptionContractNameCode = ",".join(OptionContractNameData['wind_code'])
 # 提取分钟级历史数据
 OptionContractMinuteRawData = w.wsi(OptionContractNameCode,
                                     "open,high,low,close,volume,amt,chg,pct_chg,oi,begintime,endtime",
-                                    "2019-10-30 09:00:00", "2019-10-31 18:25:00", "Fill=Previous;PriceAdj=F")
+                                    "2019-10-30 09:00:00", "2019-10-31 18:00:00", "Fill=Previous;PriceAdj=F")
 OptionContractMinuteData = pd.DataFrame(OptionContractMinuteRawData.Data).T
 OptionContractMinuteData.columns = OptionContractMinuteRawData.Fields
 # 增加分钟级数据的时间戳
@@ -95,11 +95,29 @@ OptionContractMinuteData['recodetime'] = OptionContractMinuteData['datetime'].ma
 # 生成分析数据
 OptionContractData = pd.merge(OptionContractMinuteData, OptionContractNameData, left_on="windcode",
                               right_on="wind_code", how="left")
+# 计算到期日
 OptionContractData['tradedateinverval'] = OptionContractData.apply(TradeDateInterval, axis=1, StartDate="recodedate",
                                                                    EndDate="exercise_date")
+OptionContractData['tradedateinverval'] = OptionContractData['tradedateinverval'] / 252
 # # 检验数据是否正确
 # OptionContractDataTest = OptionContractData.groupby(by=["limit_month", "exercise_price", "call_or_put"]).size()
 # # 每个合约数据相同
 # OptionContractDataTest.min() == OptionContractDataTest.max()
 # # 每个合约都有认沽认购
 # OptionContractDataTest.count(level='call_or_put')[0] == OptionContractDataTest.count(level='call_or_put')[1]
+# 获取50etf分钟级数据
+ETFMinuteRawData = w.wsi("510050.SH", "open,high,low,close,volume,amt,chg,pct_chg,oi,begintime,endtime",
+                         "2019-10-30 09:00:00",
+                         "2019-10-31 18:00:00", "Fill=Previous;PriceAdj=F")
+ETFtMinuteData = pd.DataFrame(ETFMinuteRawData.Data).T
+ETFtMinuteData.columns = ETFMinuteRawData.Fields
+# 增加分钟级数据的时间戳
+ETFtMinuteData['datetime'] = ETFMinuteRawData.Times
+ETFtMinuteData['recodedate'] = OptionContractMinuteData['datetime'].map(lambda x: x.strftime('%Y-%m-%d'))
+ETFtMinuteData['recodetime'] = OptionContractMinuteData['datetime'].map(lambda x: x.strftime('%H:%M:%S'))
+# 重命名字段，增加50etf标识
+ETFtMinuteData.columns = ["50ETF_" + str(x) for x in ETFtMinuteData.columns]
+# 生成分析数据
+OptionData = pd.merge(OptionContractData, ETFtMinuteData, left_on="datetime",
+                      right_on="50ETF_datetime", how="left")
+
