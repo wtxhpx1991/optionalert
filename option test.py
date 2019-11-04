@@ -60,6 +60,17 @@ def ImpliedPutVolatility(UnderlyingPrice, ExercisePrice, Time, InterestRate, Div
     return (HIGH + LOW) / 2
 
 
+# 获取交易日间隔
+def TradeDateInterval(ArrLike, StartDate, EndDate):
+    '''
+    调用wind函数，起始日期和截止日期使用"%Y-%m-%d"
+    :param StartDate: "%Y-%m-%d"
+    :param EndDate: "%Y-%m-%d"
+    :return:
+    '''
+    return w.tdayscount(ArrLike[StartDate], ArrLike[EndDate], "TradingCalendar=SSE").Data[0][0]
+
+
 # 获取期权合约信息OptionContractRawData
 OptionContractNameRawData = w.wset("optioncontractbasicinfo", "exchange=sse;windcode=510050.SH;status=trading")
 OptionContractNameData = pd.DataFrame(OptionContractNameRawData.Data).T
@@ -80,6 +91,8 @@ OptionContractMinuteData['recodetime'] = OptionContractMinuteData['datetime'].ma
 # 生成分析数据
 OptionContractData = pd.merge(OptionContractMinuteData, OptionContractNameData, left_on="windcode",
                               right_on="wind_code", how="left")
+OptionContractData['tradedateinverval'] = OptionContractData.apply(TradeDateInterval, axis=1, StartDate="recodedate",
+                                                                   EndDate="exercise_date")
 # # 检验数据是否正确
 # OptionContractDataTest = OptionContractData.groupby(by=["limit_month", "exercise_price", "call_or_put"]).size()
 # # 每个合约数据相同
