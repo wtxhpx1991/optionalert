@@ -15,7 +15,7 @@ TRADE_CALENDAR = w.tdays("2018-01-01", "2020-12-31", "TradingCalendar=SZSE").Tim
 # 欧式认购期权价格计算
 def EuropeanCallPrice(UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate, Volatility):
     dt = Volatility * (Time ** 0.5)
-    d1 = np.log(UnderlyingPrice / ExercisePrice) + (InterestRate - DividendRate + 0.5 * (Volatility ** 2)) / dt
+    d1 = (np.log(UnderlyingPrice / ExercisePrice) + (InterestRate - DividendRate + 0.5 * (Volatility ** 2)) *Time)/ dt
     d2 = d1 - dt
     nd1 = norm.cdf(d1)
     nd2 = norm.cdf(d2)
@@ -26,7 +26,7 @@ def EuropeanCallPrice(UnderlyingPrice, ExercisePrice, Time, InterestRate, Divide
 # 欧式认沽期权价格计算
 def EuropeanPutPrice(UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate, Volatility):
     dt = Volatility * (Time ** 0.5)
-    d1 = np.log(UnderlyingPrice / ExercisePrice) + (InterestRate - DividendRate + 0.5 * (Volatility ** 2)) / dt
+    d1 = (np.log(UnderlyingPrice / ExercisePrice) + (InterestRate - DividendRate + 0.5 * (Volatility ** 2))*Time) / dt
     d2 = d1 - dt
     nd1 = norm.cdf(-d1)
     nd2 = norm.cdf(-d2)
@@ -39,7 +39,7 @@ def EuropeanPutPrice(UnderlyingPrice, ExercisePrice, Time, InterestRate, Dividen
 def ImpliedCallVolatility(UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate, Target):
     HIGH = 5
     LOW = 0
-    while (HIGH - LOW) > 0.00001:
+    while (HIGH - LOW) > 0.0001:
         if EuropeanCallPrice(UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
                              (HIGH + LOW) / 2) > Target:
             HIGH = (HIGH + LOW) / 2
@@ -52,13 +52,23 @@ def ImpliedCallVolatility(UnderlyingPrice, ExercisePrice, Time, InterestRate, Di
 def ImpliedPutVolatility(UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate, Target):
     HIGH = 5
     LOW = 0
-    while (HIGH - LOW) > 0.00001:
+    while (HIGH - LOW) > 0.0001:
         if EuropeanPutPrice(UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
                             (HIGH + LOW) / 2) > Target:
             HIGH = (HIGH + LOW) / 2
         else:
             LOW = (HIGH + LOW) / 2
     return (HIGH + LOW) / 2
+
+
+# 求解欧式期权隐含波动率
+def ImpliedVolatility(ArrLike, Direction, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate, Target):
+    if ArrLike[Direction] == "认购":
+        return ImpliedCallVolatility(ArrLike[UnderlyingPrice], ArrLike[ExercisePrice], ArrLike[Time],
+                                     ArrLike[InterestRate], ArrLike[DividendRate], ArrLike[Target])
+    else:
+        return ImpliedPutVolatility(ArrLike[UnderlyingPrice], ArrLike[ExercisePrice], ArrLike[Time],
+                                    ArrLike[InterestRate], ArrLike[DividendRate], ArrLike[Target])
 
 
 # 获取交易日间隔
@@ -96,9 +106,9 @@ OptionContractMinuteData['recodetime'] = OptionContractMinuteData['datetime'].ma
 OptionContractData = pd.merge(OptionContractMinuteData, OptionContractNameData, left_on="windcode",
                               right_on="wind_code", how="left")
 # 计算到期日
-OptionContractData['tradedateinverval'] = OptionContractData.apply(TradeDateInterval, axis=1, StartDate="recodedate",
+OptionContractData['tradedateinterval'] = OptionContractData.apply(TradeDateInterval, axis=1, StartDate="recodedate",
                                                                    EndDate="exercise_date")
-OptionContractData['tradedateinverval'] = OptionContractData['tradedateinverval'] / 252
+OptionContractData['tradedateinterval'] = OptionContractData['tradedateinterval'] / 252
 # # 检验数据是否正确
 # OptionContractDataTest = OptionContractData.groupby(by=["limit_month", "exercise_price", "call_or_put"]).size()
 # # 每个合约数据相同
@@ -120,4 +130,12 @@ ETFtMinuteData.columns = ["50ETF_" + str(x) for x in ETFtMinuteData.columns]
 # 生成分析数据
 OptionData = pd.merge(OptionContractData, ETFtMinuteData, left_on="datetime",
                       right_on="50ETF_datetime", how="left")
-
+OptionData['interestrate'] = RISK_FREE_INTEREST_RATE
+OptionData['dividendrate'] = DIVIDEND_RATE
+# 计算隐含波动率
+OptionData["ImpliedVolatility"] = OptionData.apply(ImpliedVolatility, axis=1, Direction="call_or_put",
+                                                   UnderlyingPrice="50ETF_close",
+                                                   ExercisePrice="exercise_price", Time="tradedateinterval",
+                                                   InterestRate="interestrate",
+                                                   DividendRate="dividendrate",
+                                                   Target="close")
