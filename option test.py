@@ -2,7 +2,6 @@ from WindPy import *
 import pandas as pd
 import numpy as np
 from scipy.stats import norm
-
 import datetime as dt
 
 w.start()
@@ -15,7 +14,7 @@ TRADE_CALENDAR = w.tdays("2018-01-01", "2020-12-31", "TradingCalendar=SZSE").Tim
 # 欧式认购期权价格计算
 def EuropeanCallPrice(UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate, Volatility):
     dt = Volatility * (Time ** 0.5)
-    d1 = (np.log(UnderlyingPrice / ExercisePrice) + (InterestRate - DividendRate + 0.5 * (Volatility ** 2)) *Time)/ dt
+    d1 = (np.log(UnderlyingPrice / ExercisePrice) + (InterestRate - DividendRate + 0.5 * (Volatility ** 2)) * Time) / dt
     d2 = d1 - dt
     nd1 = norm.cdf(d1)
     nd2 = norm.cdf(d2)
@@ -26,7 +25,7 @@ def EuropeanCallPrice(UnderlyingPrice, ExercisePrice, Time, InterestRate, Divide
 # 欧式认沽期权价格计算
 def EuropeanPutPrice(UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate, Volatility):
     dt = Volatility * (Time ** 0.5)
-    d1 = (np.log(UnderlyingPrice / ExercisePrice) + (InterestRate - DividendRate + 0.5 * (Volatility ** 2))*Time) / dt
+    d1 = (np.log(UnderlyingPrice / ExercisePrice) + (InterestRate - DividendRate + 0.5 * (Volatility ** 2)) * Time) / dt
     d2 = d1 - dt
     nd1 = norm.cdf(-d1)
     nd2 = norm.cdf(-d2)
@@ -87,6 +86,7 @@ def TradeDateInterval(ArrLike, StartDate, EndDate):
 
 # 获取期权合约信息OptionContractRawData
 OptionContractNameRawData = w.wset("optioncontractbasicinfo", "exchange=sse;windcode=510050.SH;status=trading")
+# 全部合约w.wset("optioncontractbasicinfo","exchange=sse;windcode=510050.SH;status=all")
 OptionContractNameData = pd.DataFrame(OptionContractNameRawData.Data).T
 OptionContractNameData.columns = OptionContractNameRawData.Fields
 OptionContractNameData['wind_code'] = OptionContractNameData['wind_code'].map(lambda x: str(x) + ".SH")
@@ -95,7 +95,7 @@ OptionContractNameCode = ",".join(OptionContractNameData['wind_code'])
 # 提取分钟级历史数据
 OptionContractMinuteRawData = w.wsi(OptionContractNameCode,
                                     "open,high,low,close,volume,amt,chg,pct_chg,oi,begintime,endtime",
-                                    "2019-10-30 09:00:00", "2019-10-31 18:00:00", "Fill=Previous;PriceAdj=F")
+                                    "2019-10-01 09:00:00", "2019-10-31 18:00:00", "Fill=Previous;PriceAdj=F")
 OptionContractMinuteData = pd.DataFrame(OptionContractMinuteRawData.Data).T
 OptionContractMinuteData.columns = OptionContractMinuteRawData.Fields
 # 增加分钟级数据的时间戳
@@ -117,7 +117,7 @@ OptionContractData['tradedateinterval'] = OptionContractData['tradedateinterval'
 # OptionContractDataTest.count(level='call_or_put')[0] == OptionContractDataTest.count(level='call_or_put')[1]
 # 获取50etf分钟级数据
 ETFMinuteRawData = w.wsi("510050.SH", "open,high,low,close,volume,amt,chg,pct_chg,oi,begintime,endtime",
-                         "2019-10-30 09:00:00",
+                         "2019-10-01 09:00:00",
                          "2019-10-31 18:00:00", "Fill=Previous;PriceAdj=F")
 ETFtMinuteData = pd.DataFrame(ETFMinuteRawData.Data).T
 ETFtMinuteData.columns = ETFMinuteRawData.Fields
@@ -139,3 +139,6 @@ OptionData["ImpliedVolatility"] = OptionData.apply(ImpliedVolatility, axis=1, Di
                                                    InterestRate="interestrate",
                                                    DividendRate="dividendrate",
                                                    Target="close")
+
+OptionData["ImpliedVolatility"].hist(bins=100)
+
