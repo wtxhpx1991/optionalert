@@ -34,6 +34,26 @@ class OptionContract:
         '''
         return cls.ContractSet().loc[wind_code, :]
 
+    # TODO:明天再写，给定日期后计算当日仍可交易的合约列表
+    @classmethod
+    def GetListedContractOnGivingDate(cls, GivingDate):
+        '''
+        返回指定日期挂牌合约
+        :param GivingDate:
+        :return:
+        '''
+        pass
+
+    # TODO:明天再写，给定日期后计算当日至今可交易的合约列表
+    @classmethod
+    def GetListContractAfterGivingDate(cls, GivingDate):
+        '''
+        返回指定日期（含）之后交易的合约，用于数据测算时提取数据使用
+        :param GivingDate:
+        :return:
+        '''
+        pass
+
 
 class TradeCalendar:
     '''
@@ -52,7 +72,7 @@ class TradeCalendar:
     # w.tdays("2018-01-01", "2020-12-31", "TradingCalendar=SZSE").Times
     # dt.datetime.today().date().strftime('%Y-%m-%d')
     @staticmethod
-    def DateInterVal(DateInterval):
+    def DateInterVal(DateInterval=365):
         '''
         静态方法，初始化实例可返回以当前日向前后一段时间的实例
         :param DateInterval:日期，int格式
@@ -71,3 +91,13 @@ class TradeCalendar:
         :return: 返回日历数据，list格式，每一个元素为datetime.date格式
         '''
         return w.tdays(self.StartDate, self.EndDate, "TradingCalendar=SZSE").Times
+
+
+class OptionContractMinuteData(OptionContract, TradeCalendar):
+    '''
+    分钟级交易数据类，通过wind接口导入分钟级行情数据，并做格式化处理
+    '''
+
+    # OptionContract.ContractSet()[OptionContract.ContractSet()['contract_state'] == "上市"].index
+    def __init__(self):
+        pass
