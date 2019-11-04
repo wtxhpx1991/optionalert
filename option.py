@@ -33,3 +33,41 @@ class OptionContract:
         :return: 返回期权合约信息，pandas.series
         '''
         return cls.ContractSet().loc[wind_code, :]
+
+
+class TradeCalendar:
+    '''
+    获取交易日历
+    '''
+
+    def __init__(self, StartDate, EndDate):
+        '''
+        使用wind接口获取交易日历
+        :param StartDate: 起始日期%Y-%m-%d
+        :param EndDate: 终止日期%Y-%m-%d
+        '''
+        self.StartDate = StartDate
+        self.EndDate = EndDate
+
+    # w.tdays("2018-01-01", "2020-12-31", "TradingCalendar=SZSE").Times
+    # dt.datetime.today().date().strftime('%Y-%m-%d')
+    @staticmethod
+    def DateInterVal(DateInterval):
+        '''
+        静态方法，初始化实例可返回以当前日向前后一段时间的实例
+        :param DateInterval:日期，int格式
+        :return:
+        '''
+        StartDate = dt.datetime.today().date() + dt.timedelta(days=-DateInterval)
+        EndDate = dt.datetime.today().date() + dt.timedelta(days=DateInterval)
+        StartDate = StartDate.strftime('%Y-%m-%d')
+        EndDate = EndDate.strftime('%Y-%m-%d')
+        return TradeCalendar(StartDate, EndDate)
+
+    @property
+    def TradeCalendarData(self):
+        '''
+        定义日历属性
+        :return: 返回日历数据，list格式，每一个元素为datetime.date格式
+        '''
+        return w.tdays(self.StartDate, self.EndDate, "TradingCalendar=SZSE").Times
