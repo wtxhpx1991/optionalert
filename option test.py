@@ -32,7 +32,33 @@ def EuropeanPutPrice(UnderlyingPrice, ExercisePrice, Time, InterestRate, Dividen
     result = ExercisePrice * np.exp(-InterestRate * Time) * nd2 - np.exp(-DividendRate * Time) * UnderlyingPrice * nd1
     return result
 
+
 # 求解欧式认购期权隐含波动率
+
+def ImpliedCallVolatility(UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate, Target):
+    HIGH = 5
+    LOW = 0
+    while (HIGH - LOW) > 0.00001:
+        if EuropeanCallPrice(UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                             (HIGH + LOW) / 2) > Target:
+            HIGH = (HIGH + LOW) / 2
+        else:
+            LOW = (HIGH + LOW) / 2
+    return (HIGH + LOW) / 2
+
+
+# 求解欧式认沽期权隐含波动率
+def ImpliedPutVolatility(UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate, Target):
+    HIGH = 5
+    LOW = 0
+    while (HIGH - LOW) > 0.00001:
+        if EuropeanPutPrice(UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                            (HIGH + LOW) / 2) > Target:
+            HIGH = (HIGH + LOW) / 2
+        else:
+            LOW = (HIGH + LOW) / 2
+    return (HIGH + LOW) / 2
+
 
 # 获取期权合约信息OptionContractRawData
 OptionContractNameRawData = w.wset("optioncontractbasicinfo", "exchange=sse;windcode=510050.SH;status=trading")
