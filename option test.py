@@ -9,6 +9,7 @@ w.start()
 # 定义无风险利率以及股息率
 RISK_FREE_INTEREST_RATE = 0.025
 DIVIDEND_RATE = 0
+TRADE_CALENDAR = w.tdays("2018-01-01", "2020-12-31", "TradingCalendar=SZSE").Times
 
 
 # 欧式认购期权价格计算
@@ -67,8 +68,11 @@ def TradeDateInterval(ArrLike, StartDate, EndDate):
     :param StartDate: "%Y-%m-%d"
     :param EndDate: "%Y-%m-%d"
     :return:
+    ！！！不要用wind的w.tdayscount("2019-11-04", "2019-11-04", "TradingCalendar=SZSE")函数，太慢了！！！
     '''
-    return w.tdayscount(ArrLike[StartDate], ArrLike[EndDate], "TradingCalendar=SSE").Data[0][0]
+    StartDateFormat = dt.datetime.strptime(ArrLike[StartDate], "%Y-%m-%d").date()
+    EndDateFormat = dt.datetime.strptime(ArrLike[EndDate], "%Y-%m-%d").date()
+    return TRADE_CALENDAR.index(EndDateFormat) - TRADE_CALENDAR.index(StartDateFormat) + 1
 
 
 # 获取期权合约信息OptionContractRawData
