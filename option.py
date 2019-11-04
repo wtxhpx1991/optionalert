@@ -34,7 +34,6 @@ class OptionContract:
         '''
         return cls.ContractSet().loc[wind_code, :]
 
-    # TODO:明天再写，给定日期后计算当日仍可交易的合约列表
     @classmethod
     def GetListedContractOnGivingDate(cls, GivingDate):
         '''
@@ -45,7 +44,6 @@ class OptionContract:
         return cls.ContractSet()[(cls.ContractSet()["listed_date"] <= dt.datetime.strptime(GivingDate, "%Y-%m-%d")) & (
                     cls.ContractSet()["expire_date"] >= dt.datetime.strptime(GivingDate, "%Y-%m-%d"))]
 
-    # TODO:明天再写，给定日期后计算当日至今已交易和可交易的合约列表
     @classmethod
     def GetListedContractAfterGivingDate(cls, GivingDate):
         '''
