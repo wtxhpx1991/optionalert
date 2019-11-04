@@ -39,20 +39,21 @@ class OptionContract:
     def GetListedContractOnGivingDate(cls, GivingDate):
         '''
         返回指定日期挂牌合约
-        :param GivingDate:
+        :param GivingDate:给定日期%Y-%m-%d
         :return:
         '''
-        pass
+        return cls.ContractSet()[(cls.ContractSet()["listed_date"] <= dt.datetime.strptime(GivingDate, "%Y-%m-%d")) & (
+                    cls.ContractSet()["expire_date"] >= dt.datetime.strptime(GivingDate, "%Y-%m-%d"))]
 
-    # TODO:明天再写，给定日期后计算当日至今可交易的合约列表
+    # TODO:明天再写，给定日期后计算当日至今已交易和可交易的合约列表
     @classmethod
-    def GetListContractAfterGivingDate(cls, GivingDate):
+    def GetListedContractAfterGivingDate(cls, GivingDate):
         '''
         返回指定日期（含）之后交易的合约，用于数据测算时提取数据使用
-        :param GivingDate:
+        :param GivingDate:给定日期%Y-%m-%d
         :return:
         '''
-        pass
+        return cls.ContractSet()[cls.ContractSet()["listed_date"] >= dt.datetime.strptime(GivingDate, "%Y-%m-%d")]
 
 
 class TradeCalendar:
