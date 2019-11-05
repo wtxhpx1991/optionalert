@@ -191,9 +191,31 @@ class OptionGreeksMethod:
     7.1-GammaValue
     7.2-GammaValueForApply
     8-VEGA计算VegaValue
+    8.1-VegaValue
+    8.2-VegaValueForApply
     9-THETA计算ThetaValue
+    9.1-看涨期权CallThetaValue
+    9.2-看涨期权CallThetaValueForApply
+    9.3-看跌期权PutThetaValue
+    9.4-看跌期权PutThetaValueForApply
     10-RHO计算RhoValue
-    其中，3.2、4.2、5、6、7、8、9、10增加了ArrLike参数，用于对pandas.dataframe格式数据使用apply方法
+    10.1-看涨期权CallRhoValue
+    10.2-看涨期权CallRhoValueForApply
+    10.3-看跌期权PutRhoValue
+    10.4-看跌期权PutRhoValueForApply
+    11-Vomma计算VommaValue，c/sigma*sigma
+    11.1-VommaValue
+    11.2-VommaValueForApply
+    12-Vanna计算VannaValue，c/sigma*s
+    12.1-VannaValue
+    12.2-VannaValueForApply
+    13-Charm计算CharmValue，c/s*t
+    13.1-CharmValue
+    13.2-CharmValueForApply
+    14-Veta计算VetaValue，c/t*sigma
+    14.1-VetaValue
+    14.2-VetaValueForApply
+    其中，XXXXForApply类函数增加了ArrLike参数，用于对pandas.dataframe格式数据使用apply方法
     '''
 
     @classmethod
