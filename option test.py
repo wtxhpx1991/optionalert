@@ -95,7 +95,7 @@ OptionContractNameCode = ",".join(OptionContractNameData['wind_code'])
 # 提取分钟级历史数据
 OptionContractMinuteRawData = w.wsi(OptionContractNameCode,
                                     "open,high,low,close,volume,amt,chg,pct_chg,oi,begintime,endtime",
-                                    "2019-10-01 09:00:00", "2019-10-31 18:00:00", "Fill=Previous;PriceAdj=F")
+                                    "2019-10-31 09:00:00", "2019-10-31 18:00:00", "Fill=Previous;PriceAdj=F")
 OptionContractMinuteData = pd.DataFrame(OptionContractMinuteRawData.Data).T
 OptionContractMinuteData.columns = OptionContractMinuteRawData.Fields
 # 增加分钟级数据的时间戳
@@ -117,7 +117,7 @@ OptionContractData['tradedateinterval'] = OptionContractData['tradedateinterval'
 # OptionContractDataTest.count(level='call_or_put')[0] == OptionContractDataTest.count(level='call_or_put')[1]
 # 获取50etf分钟级数据
 ETFMinuteRawData = w.wsi("510050.SH", "open,high,low,close,volume,amt,chg,pct_chg,oi,begintime,endtime",
-                         "2019-10-01 09:00:00",
+                         "2019-10-31 09:00:00",
                          "2019-10-31 18:00:00", "Fill=Previous;PriceAdj=F")
 ETFtMinuteData = pd.DataFrame(ETFMinuteRawData.Data).T
 ETFtMinuteData.columns = ETFMinuteRawData.Fields
