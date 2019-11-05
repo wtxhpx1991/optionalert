@@ -15,7 +15,7 @@ class OptionContract:
 
     def __init__(self, exchange="sse", windcode="510050.SH", status="all"):
         self.exchange = exchange
-        self.windcode = windcode
+        self.windcode = windcode  # 默认标的为50ETF，将来品种多了后可以调整参数，或者直接实例化
         self.status = status
         self.parameter = "exchange=" + exchange + ";" + "windcode=" + windcode + ";" + "status=" + status
 
@@ -25,10 +25,11 @@ class OptionContract:
         获取期权合约数据集
         :return: 返回期权合约数据集，pandas.dataframe
         '''
+        ExchangeLabel = "." + cls().windcode.split(".")[1]  # 判断交易所标签，如"510050.SH"->".SH"
         OptionContractNameRawData = w.wset("optioncontractbasicinfo", cls().parameter)
         OptionContractNameData = pd.DataFrame(OptionContractNameRawData.Data).T
         OptionContractNameData.columns = OptionContractNameRawData.Fields
-        OptionContractNameData.index = OptionContractNameData['wind_code'].map(lambda x: str(x) + ".SH")
+        OptionContractNameData.index = OptionContractNameData['wind_code'].map(lambda x: str(x) + ExchangeLabel)
         return OptionContractNameData
 
     @classmethod
@@ -43,9 +44,9 @@ class OptionContract:
     @classmethod
     def GetListedContractOnGivenDate(cls, GivenDate):
         '''
-        返回指定日期挂牌合约
+        返回指定日期正挂牌交易的合约
         :param GivingDate:给定日期%Y-%m-%d
-        :return:
+        :return:返回期权合约数据集，pandas.dataframe
         '''
         return cls.ContractSet()[(cls.ContractSet()["listed_date"] <= dt.datetime.strptime(GivenDate, "%Y-%m-%d")) & (
                 cls.ContractSet()["expire_date"] >= dt.datetime.strptime(GivenDate, "%Y-%m-%d"))]
@@ -53,18 +54,34 @@ class OptionContract:
     @classmethod
     def GetListedContractAfterGivenDate(cls, GivenDate):
         '''
-        返回指定日期（含）之后交易的合约，用于数据测算时提取数据使用。包含给定日期后挂牌现在已经摘牌的及仍在交易的。
+        返回指定日期（含）之后曾挂牌交易过的合约，用于数据测算时提取数据使用。包含给定日期后挂牌现在已经摘牌的及仍在交易的。
         :param GivingDate:给定日期%Y-%m-%d
-        :return:
+        :return:返回期权合约数据集，pandas.dataframe
         '''
         return cls.ContractSet()[cls.ContractSet()["listed_date"] >= dt.datetime.strptime(GivenDate, "%Y-%m-%d")]
+
+    # TODO 返回指定日期之间曾挂牌交易过的合约，用于数据测算时提取数据使用。
+    @classmethod
+    def GetListedContractBetweenGivenDate(cls, StartDate, EndDate):
+        '''
+        返回指定日期之间曾挂牌交易过的合约，用于数据测算时提取数据使用。
+        一共两种情形：一是挂牌早于起始时间，但摘牌晚于起始时间；二是挂牌在期间的。即期初正在交易的和期间挂牌交易的。
+        :param StartDate:给定日期%Y-%m-%d
+        :param EndDate: 给定日期%Y-%m-%d
+        :return:返回期权合约数据集，pandas.dataframe
+        '''
+        ListedContractOnStartDate = cls.GetListedContractOnGivenDate(StartDate)
+        ListedContractInTimeInterval = cls.ContractSet()[
+            (cls.ContractSet()["listed_date"] > dt.datetime.strptime(StartDate, "%Y-%m-%d")) & (
+                    cls.ContractSet()["listed_date"] <= dt.datetime.strptime(EndDate, "%Y-%m-%d"))]
+        return ListedContractOnStartDate.append(ListedContractInTimeInterval)
 
     @classmethod
     def GetVerticalContractByGivenDate(cls, wind_code, GivenDate):
         '''
         给定期权合约及指定日期，返回其垂直合约列表（不包含本合约）。垂直合约是指同一到期月份不同执行价格的合约。
-        :param wind_code:
-        :param GivenDate:
+        :param wind_code:例如"10001504.SH"
+        :param GivenDate:例如'2019-04-01'
         :return:
         '''
         ListedContractOnGivenDate = cls.GetListedContractOnGivenDate(GivenDate)
@@ -76,18 +93,24 @@ class OptionContract:
         else:
             print("该合约在" + GivenDate + "已经摘牌")
 
-    # TODO 写垂直合约、水平合约、T型合约，方便后续测试
     @classmethod
     def GetHorizonContractByGivenDate(cls, wind_code, GivenDate):
         '''
         给定期权合约及指定日期，返回其水平合约列表（不包含本合约）。水平合约是指同执行价格一不同到期月份的合约。
-        :param wind_code:
-        :param GivenDate:
+        :param wind_code:例如"10001504.SH"
+        :param GivenDate:例如'2019-04-01'
         :return:
         '''
-        pass
+        ListedContractOnGivenDate = cls.GetListedContractOnGivenDate(GivenDate)
+        if wind_code in list(ListedContractOnGivenDate.index):
+            # 判断，如果合约在指定日期仍挂牌交易，返回该合约信息ContractInformationOnGivenDate，并基于该信息查询水平合约列表
+            ContractInformationOnGivenDate = ListedContractOnGivenDate.loc[wind_code, :]
+            ContractExercisePrice = ContractInformationOnGivenDate['exercise_price']  # 返回合约执行价格
+            return ListedContractOnGivenDate[ListedContractOnGivenDate['exercise_price'] == ContractExercisePrice]
+        else:
+            print("该合约在" + GivenDate + "已经摘牌")
 
-    # TODO 写垂直合约、水平合约、T型合约，方便后续测试
+    # TODO 写T型合约，方便后续测试
     @classmethod
     def GetTTableContractByGivenDate(cls, wind_code, GivenDate):
         '''
@@ -100,6 +123,7 @@ class OptionContract:
 
 
 # aa=OptionContract.GetVerticalContractByGivenDate("10001504.SH",GivenDate)
+# aa1=OptionContract.GetHorizonContractByGivenDate("10001504.SH",GivenDate)
 
 class TradeCalendar:
     '''
