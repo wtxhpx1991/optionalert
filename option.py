@@ -62,8 +62,16 @@ class OptionContract:
         :param GivenDate:
         :return:
         '''
-        pass
+        ListedContractOnGivenDate = cls.GetListedContractOnGivenDate(GivenDate)
+        if wind_code in list(ListedContractOnGivenDate.index):
+            # 判断，如果合约在指定日期仍挂牌交易，返回该合约信息ContractInformationOnGivenDate，并基于该信息查询垂直合约列表
+            ContractInformationOnGivenDate = ListedContractOnGivenDate.loc[wind_code, :]
+            ContractLimitMonth = ContractInformationOnGivenDate['limit_month']  # 返回合约到期月份
+            return ListedContractOnGivenDate[ListedContractOnGivenDate['limit_month'] == ContractLimitMonth]
+        else:
+            print("该合约在" + GivenDate + "已经摘牌")
 
+    # TODO 写垂直合约、水平合约、T型合约，方便后续测试
     @classmethod
     def GetHorizonContractByGivenDate(cls, wind_code, GivenDate):
         '''
@@ -74,14 +82,16 @@ class OptionContract:
         '''
         pass
 
+    # TODO 写垂直合约、水平合约、T型合约，方便后续测试
     @classmethod
-    def GetTTableCOntractByGivenDate(cls, wind_code, GivenDate):
+    def GetTTableContractByGivenDate(cls, wind_code, GivenDate):
         '''
-        给定期权合约及指定日期，返回其T型合约列表（包含本合约）
+        给定期权合约及指定日期，返回其T型合约列表（包含本合约）。
         :param wind_code:
         :param GivenDate:
         :return:
         '''
+        pass
 
 
 class TradeCalendar:
