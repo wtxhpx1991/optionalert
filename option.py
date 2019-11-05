@@ -13,13 +13,19 @@ class OptionContract:
     ContractSet方法:使用wind接口获取上证50ETF全部合约，包括已经摘牌的合约。
     '''
 
+    def __init__(self, exchange="sse", windcode="510050.SH", status="all"):
+        self.exchange = exchange
+        self.windcode = windcode
+        self.status = status
+        self.parameter = "exchange=" + exchange + ";" + "windcode=" + windcode + ";" + "status=" + status
+
     @classmethod
     def ContractSet(cls):
         '''
         获取期权合约数据集
         :return: 返回期权合约数据集，pandas.dataframe
         '''
-        OptionContractNameRawData = w.wset("optioncontractbasicinfo", "exchange=sse;windcode=510050.SH;status=all")
+        OptionContractNameRawData = w.wset("optioncontractbasicinfo", cls().parameter)
         OptionContractNameData = pd.DataFrame(OptionContractNameRawData.Data).T
         OptionContractNameData.columns = OptionContractNameRawData.Fields
         OptionContractNameData.index = OptionContractNameData['wind_code'].map(lambda x: str(x) + ".SH")
@@ -53,7 +59,6 @@ class OptionContract:
         '''
         return cls.ContractSet()[cls.ContractSet()["listed_date"] >= dt.datetime.strptime(GivenDate, "%Y-%m-%d")]
 
-    # TODO 写垂直合约、水平合约、T型合约，方便后续测试
     @classmethod
     def GetVerticalContractByGivenDate(cls, wind_code, GivenDate):
         '''
@@ -93,6 +98,8 @@ class OptionContract:
         '''
         pass
 
+
+# aa=OptionContract.GetVerticalContractByGivenDate("10001504.SH",GivenDate)
 
 class TradeCalendar:
     '''
