@@ -109,7 +109,6 @@ class OptionContract:
         else:
             print("该合约在" + GivenDate + "已经摘牌")
 
-    # TODO 写T型合约，方便后续测试
     @classmethod
     def GetTTableContractByGivenDate(cls, wind_code, GivenDate):
         '''
@@ -130,9 +129,8 @@ class OptionContract:
                 ListedContractOnGivenDate['exercise_price'] == ContractExercisePrice]])
             return TempResult.drop_duplicates().sort_index()  # 去重并排序
 
-        # aa=OptionContract.GetVerticalContractByGivenDate("10001504.SH",GivenDate)
 
-
+# aa=OptionContract.GetVerticalContractByGivenDate("10001504.SH",GivenDate)
 # aa1=OptionContract.GetHorizonContractByGivenDate("10001504.SH",GivenDate)
 
 class TradeCalendar:
@@ -171,6 +169,199 @@ class TradeCalendar:
         :return: 返回日历数据，list格式，每一个元素为datetime.date格式
         '''
         return w.tdays(self.StartDate, self.EndDate, "TradingCalendar=SZSE").Times
+
+
+# TODO 计算期权希腊字母
+class OptionGreekAlphabetMethod:
+    '''
+    计算给定欧式期权合约数据，计算期权的希腊字母，包括以下几个类方法：
+    1-看涨期权价格计算EuropeanCallPrice
+    2-看跌期权价格计算EuropeanPutPrice
+    3.1-看涨期权隐含波动率计算ImpliedCallVolatility
+    3.2-看涨期权隐含波动率计算ImpliedCallVolatilityForApply
+    4.1-看跌期权隐含波动率计算ImpliedPutVolatility
+    4.2-看跌期权隐含波动率计算ImpliedPutVolatilityForApply
+    5-期权隐含波动率计算（基于call_or_put字段）ImpliedVolatility
+    6-DELTA计算DeltaValue
+    7-GAMMA计算GammaValue
+    8-THETA计算ThetaValue
+    9-RHO计算RhoValue
+    其中，3.2、4.2、5、6、7、8、9增加了ArrLike参数，用于对pandas.dataframe格式数据使用apply方法
+    '''
+
+    @classmethod
+    def EuropeanCallPrice(cls, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate, Volatility):
+        '''
+        1-看涨期权价格计算EuropeanCallPrice
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = Volatility * (Time ** 0.5)
+        d1 = (np.log(UnderlyingPrice / ExercisePrice) + (
+                InterestRate - DividendRate + 0.5 * (Volatility ** 2)) * Time) / dt
+        d2 = d1 - dt
+        nd1 = norm.cdf(d1)
+        nd2 = norm.cdf(d2)
+        result = np.exp(-DividendRate * Time) * UnderlyingPrice * nd1 - ExercisePrice * np.exp(
+            -InterestRate * Time) * nd2
+        return result
+
+    @classmethod
+    def EuropeanPutPrice(cls, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate, Volatility):
+        '''
+        2-看跌期权价格计算EuropeanPutPrice
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = Volatility * (Time ** 0.5)
+        d1 = (np.log(UnderlyingPrice / ExercisePrice) + (
+                InterestRate - DividendRate + 0.5 * (Volatility ** 2)) * Time) / dt
+        d2 = d1 - dt
+        nd1 = norm.cdf(-d1)
+        nd2 = norm.cdf(-d2)
+        result = ExercisePrice * np.exp(-InterestRate * Time) * nd2 - np.exp(
+            -DividendRate * Time) * UnderlyingPrice * nd1
+        return result
+
+    @classmethod
+    def ImpliedCallVolatility(cls, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate, Target):
+        '''
+        3.1-看涨期权隐含波动率计算ImpliedCallVolatility
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Target:
+        :return:
+        '''
+        HIGH = 5
+        LOW = 0
+        while (HIGH - LOW) > 0.0001:
+            if cls.EuropeanCallPrice(UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                                     (HIGH + LOW) / 2) > Target:
+                HIGH = (HIGH + LOW) / 2
+            else:
+                LOW = (HIGH + LOW) / 2
+        return (HIGH + LOW) / 2
+
+    @classmethod
+    def ImpliedCallVolatilityForApply(cls, ArrLike, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                                      Target):
+        '''
+        3.2-看涨期权隐含波动率计算ImpliedCallVolatilityForApply
+        :param ArrLike:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Target:
+        :return:
+        '''
+        HIGH = 5
+        LOW = 0
+        while (HIGH - LOW) > 0.0001:
+            if cls.EuropeanCallPrice(ArrLike[UnderlyingPrice], ArrLike[ExercisePrice], ArrLike[Time],
+                                     ArrLike[InterestRate], ArrLike[DividendRate],
+                                     (HIGH + LOW) / 2) > ArrLike[Target]:
+                HIGH = (HIGH + LOW) / 2
+            else:
+                LOW = (HIGH + LOW) / 2
+        return (HIGH + LOW) / 2
+
+    @classmethod
+    def ImpliedPutVolatility(cls, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate, Target):
+        '''
+        4.1-看跌期权隐含波动率计算ImpliedPutVolatility
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Target:
+        :return:
+        '''
+        HIGH = 5
+        LOW = 0
+        while (HIGH - LOW) > 0.0001:
+            if cls.EuropeanPutPrice(UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                                    (HIGH + LOW) / 2) > Target:
+                HIGH = (HIGH + LOW) / 2
+            else:
+                LOW = (HIGH + LOW) / 2
+        return (HIGH + LOW) / 2
+
+    @classmethod
+    def ImpliedPutVolatilityForApply(cls, ArrLike, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                                     Target):
+        '''
+        4.2-看跌期权隐含波动率计算ImpliedPutVolatilityForApply
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Target:
+        :return:
+        '''
+        HIGH = 5
+        LOW = 0
+        while (HIGH - LOW) > 0.0001:
+            if cls.EuropeanPutPrice(ArrLike[UnderlyingPrice], ArrLike[ExercisePrice], ArrLike[Time],
+                                    ArrLike[InterestRate], ArrLike[DividendRate],
+                                    (HIGH + LOW) / 2) > ArrLike[Target]:
+                HIGH = (HIGH + LOW) / 2
+            else:
+                LOW = (HIGH + LOW) / 2
+        return (HIGH + LOW) / 2
+
+    @classmethod
+    def ImpliedVolatility(cls, ArrLike, Direction, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                          Target):
+        '''
+        5-期权隐含波动率计算（基于call_or_put字段）ImpliedVolatility
+        :param ArrLike:
+        :param Direction:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Target:
+        :return:
+        '''
+        if ArrLike[Direction] == "认购":
+            return cls.ImpliedCallVolatility(ArrLike[UnderlyingPrice], ArrLike[ExercisePrice], ArrLike[Time],
+                                             ArrLike[InterestRate], ArrLike[DividendRate], ArrLike[Target])
+        else:
+            return cls.ImpliedPutVolatility(ArrLike[UnderlyingPrice], ArrLike[ExercisePrice], ArrLike[Time],
+                                            ArrLike[InterestRate], ArrLike[DividendRate], ArrLike[Target])
+
+    # TODO 计算希腊字母
+    @classmethod
+    def DeltaValue(cls, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate, Volatility):
+        '''
+        6-DELTA计算DeltaValue
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        pass
 
 
 class OptionContractMinuteData(OptionContract, TradeCalendar):
