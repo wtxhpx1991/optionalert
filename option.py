@@ -60,7 +60,6 @@ class OptionContract:
         '''
         return cls.ContractSet()[cls.ContractSet()["listed_date"] >= dt.datetime.strptime(GivenDate, "%Y-%m-%d")]
 
-    # TODO 返回指定日期之间曾挂牌交易过的合约，用于数据测算时提取数据使用。
     @classmethod
     def GetListedContractBetweenGivenDate(cls, StartDate, EndDate):
         '''
@@ -119,10 +118,21 @@ class OptionContract:
         :param GivenDate:
         :return:
         '''
-        pass
+        ListedContractOnGivenDate = cls.GetListedContractOnGivenDate(GivenDate)
+        if wind_code in list(ListedContractOnGivenDate.index):
+            # 判断，如果合约在指定日期仍挂牌交易，返回该合约信息ContractInformationOnGivenDate，并基于该信息查询T型合约列表
+            ContractInformationOnGivenDate = ListedContractOnGivenDate.loc[wind_code, :]
+            ContractLimitMonth = ContractInformationOnGivenDate['limit_month']  # 返回合约到期月份
+            ListedContractOnGivenDateResult = ListedContractOnGivenDate[
+                ListedContractOnGivenDate['limit_month'] == ContractLimitMonth]
+            ContractExercisePrice = ContractInformationOnGivenDate['exercise_price']  # 返回合约执行价格
+            TempResult = pd.concat([ListedContractOnGivenDateResult, ListedContractOnGivenDate[
+                ListedContractOnGivenDate['exercise_price'] == ContractExercisePrice]])
+            return TempResult.drop_duplicates().sort_index()  # 去重并排序
+
+        # aa=OptionContract.GetVerticalContractByGivenDate("10001504.SH",GivenDate)
 
 
-# aa=OptionContract.GetVerticalContractByGivenDate("10001504.SH",GivenDate)
 # aa1=OptionContract.GetHorizonContractByGivenDate("10001504.SH",GivenDate)
 
 class TradeCalendar:
