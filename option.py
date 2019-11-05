@@ -172,7 +172,7 @@ class TradeCalendar:
 
 
 # TODO 计算期权希腊字母
-class OptionGreekAlphabetMethod:
+class OptionGreeksMethod:
     '''
     计算给定欧式期权合约数据，计算期权的希腊字母，包括以下几个类方法：
     1-看涨期权价格计算EuropeanCallPrice
@@ -183,10 +183,17 @@ class OptionGreekAlphabetMethod:
     4.2-看跌期权隐含波动率计算ImpliedPutVolatilityForApply
     5-期权隐含波动率计算（基于call_or_put字段）ImpliedVolatility
     6-DELTA计算DeltaValue
+    6.1-看涨期权CallDeltaValue
+    6.2-看涨期权CallDeltaValueForApply
+    6.3-看跌期权PutDeltaValue
+    6.4-看跌期权PutDeltaValueForApply
     7-GAMMA计算GammaValue
-    8-THETA计算ThetaValue
-    9-RHO计算RhoValue
-    其中，3.2、4.2、5、6、7、8、9增加了ArrLike参数，用于对pandas.dataframe格式数据使用apply方法
+    7.1-GammaValue
+    7.2-GammaValueForApply
+    8-VEGA计算VegaValue
+    9-THETA计算ThetaValue
+    10-RHO计算RhoValue
+    其中，3.2、4.2、5、6、7、8、9、10增加了ArrLike参数，用于对pandas.dataframe格式数据使用apply方法
     '''
 
     @classmethod
