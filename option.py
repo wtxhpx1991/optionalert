@@ -35,23 +35,53 @@ class OptionContract:
         return cls.ContractSet().loc[wind_code, :]
 
     @classmethod
-    def GetListedContractOnGivingDate(cls, GivingDate):
+    def GetListedContractOnGivenDate(cls, GivenDate):
         '''
         返回指定日期挂牌合约
         :param GivingDate:给定日期%Y-%m-%d
         :return:
         '''
-        return cls.ContractSet()[(cls.ContractSet()["listed_date"] <= dt.datetime.strptime(GivingDate, "%Y-%m-%d")) & (
-                    cls.ContractSet()["expire_date"] >= dt.datetime.strptime(GivingDate, "%Y-%m-%d"))]
+        return cls.ContractSet()[(cls.ContractSet()["listed_date"] <= dt.datetime.strptime(GivenDate, "%Y-%m-%d")) & (
+                cls.ContractSet()["expire_date"] >= dt.datetime.strptime(GivenDate, "%Y-%m-%d"))]
 
     @classmethod
-    def GetListedContractAfterGivingDate(cls, GivingDate):
+    def GetListedContractAfterGivenDate(cls, GivenDate):
         '''
-        返回指定日期（含）之后交易的合约，用于数据测算时提取数据使用
+        返回指定日期（含）之后交易的合约，用于数据测算时提取数据使用。包含给定日期后挂牌现在已经摘牌的及仍在交易的。
         :param GivingDate:给定日期%Y-%m-%d
         :return:
         '''
-        return cls.ContractSet()[cls.ContractSet()["listed_date"] >= dt.datetime.strptime(GivingDate, "%Y-%m-%d")]
+        return cls.ContractSet()[cls.ContractSet()["listed_date"] >= dt.datetime.strptime(GivenDate, "%Y-%m-%d")]
+
+    # TODO 写垂直合约、水平合约、T型合约，方便后续测试
+    @classmethod
+    def GetVerticalContractByGivenDate(cls, wind_code, GivenDate):
+        '''
+        给定期权合约及指定日期，返回其垂直合约列表（不包含本合约）。垂直合约是指同一到期月份不同执行价格的合约。
+        :param wind_code:
+        :param GivenDate:
+        :return:
+        '''
+        pass
+
+    @classmethod
+    def GetHorizonContractByGivenDate(cls, wind_code, GivenDate):
+        '''
+        给定期权合约及指定日期，返回其水平合约列表（不包含本合约）。水平合约是指同执行价格一不同到期月份的合约。
+        :param wind_code:
+        :param GivenDate:
+        :return:
+        '''
+        pass
+
+    @classmethod
+    def GetTTableCOntractByGivenDate(cls, wind_code, GivenDate):
+        '''
+        给定期权合约及指定日期，返回其T型合约列表（包含本合约）
+        :param wind_code:
+        :param GivenDate:
+        :return:
+        '''
 
 
 class TradeCalendar:
@@ -86,7 +116,7 @@ class TradeCalendar:
     @property
     def TradeCalendarData(self):
         '''
-        定义日历属性
+        定义属性，返回日历数据
         :return: 返回日历数据，list格式，每一个元素为datetime.date格式
         '''
         return w.tdays(self.StartDate, self.EndDate, "TradingCalendar=SZSE").Times
