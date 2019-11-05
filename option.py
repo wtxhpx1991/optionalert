@@ -942,17 +942,463 @@ class OptionGreeksMethod:
                                    ArrLike[DividendRate],
                                    ArrLike[Volatility])
 
+    @classmethod
+    def CallVommaValue(cls, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                       Volatility):
+        '''
+        11.1-看涨期权CallVommaValue
+        :param Direction:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = Volatility * (Time ** 0.5)
+        d1 = (np.log(UnderlyingPrice / ExercisePrice) + (
+                InterestRate - DividendRate + 0.5 * (Volatility ** 2)) * Time) / dt
+        d2 = d1 - dt
+        nd1_partial = norm.pdf(d1)
+        result = UnderlyingPrice * nd1_partial * (Time ** 0.5) * d1 * d2 / Volatility
+        return result
 
-# TEST = {"Direction": ["认购", "认沽"], "UnderlyingPrice": [3.05, 2.95], "ExercisePrice": [3.00, 3.00],
-#         "Time": [0.1234, 0.1234], "InterestRate": [0.025, 0.025], "DividendRate": [0, 0], "Volatility": [0.2, 0.2],
-#         "close": [0.15, 0.13]}
-# TEST_df = pd.DataFrame(TEST)
-# TEST_df.apply(OptionGreeksMethod.ThetaValueForApply, axis=1, Direction="Direction",
-#               UnderlyingPrice="UnderlyingPrice",
-#               ExercisePrice="ExercisePrice", Time="Time",
-#               InterestRate="InterestRate",
-#               DividendRate="DividendRate",
-#               Volatility="Volatility")
+    @classmethod
+    def CallVommaValueForApply(cls, ArrLike, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                               Volatility):
+        '''
+        11.2-看涨期权CallVommaValueForApply
+        :param ArrLike:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = ArrLike[Volatility] * (ArrLike[Time] ** 0.5)
+        d1 = (np.log(ArrLike[UnderlyingPrice] / ArrLike[ExercisePrice]) + (
+                ArrLike[InterestRate] - ArrLike[DividendRate] + 0.5 * (ArrLike[Volatility] ** 2)) * ArrLike[Time]) / dt
+        d2 = d1 - dt
+        nd1_partial = norm.pdf(d1)
+        result = ArrLike[UnderlyingPrice] * nd1_partial * (ArrLike[Time] ** 0.5) * d1 * d2 / ArrLike[Volatility]
+        return result
+
+    @classmethod
+    def PutVommaValue(cls, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                      Volatility):
+        '''
+        11.3-看跌期权PutVommaValue
+        :param Direction:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = Volatility * (Time ** 0.5)
+        d1 = (np.log(UnderlyingPrice / ExercisePrice) + (
+                InterestRate - DividendRate + 0.5 * (Volatility ** 2)) * Time) / dt
+        d2 = d1 - dt
+        nd1_partial = norm.pdf(d1)
+        result = UnderlyingPrice * nd1_partial * (Time ** 0.5) * d1 * d2 / Volatility
+        return result
+
+    @classmethod
+    def PutVommaValueForApply(cls, ArrLike, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                              Volatility):
+        '''
+        11.4-看跌期权PutVommaValueForApply
+        :param ArrLike:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = ArrLike[Volatility] * (ArrLike[Time] ** 0.5)
+        d1 = (np.log(ArrLike[UnderlyingPrice] / ArrLike[ExercisePrice]) + (
+                ArrLike[InterestRate] - ArrLike[DividendRate] + 0.5 * (ArrLike[Volatility] ** 2)) * ArrLike[Time]) / dt
+        d2 = d1 - dt
+        nd1_partial = norm.pdf(d1)
+        result = ArrLike[UnderlyingPrice] * nd1_partial * (ArrLike[Time] ** 0.5) * d1 * d2 / ArrLike[Volatility]
+        return result
+
+    @classmethod
+    def VommaValueForApply(cls, ArrLike, Direction, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                           Volatility):
+        '''
+        11-Vomma计算VommaValueForApply，c/sigma*sigma
+        :param ArrLike:
+        :param Direction:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        if ArrLike[Direction] == "认购":
+            return cls.CallVommaValue(ArrLike[UnderlyingPrice], ArrLike[ExercisePrice], ArrLike[Time],
+                                      ArrLike[InterestRate],
+                                      ArrLike[DividendRate],
+                                      ArrLike[Volatility])
+        else:
+            return cls.PutVommaValue(ArrLike[UnderlyingPrice], ArrLike[ExercisePrice], ArrLike[Time],
+                                     ArrLike[InterestRate],
+                                     ArrLike[DividendRate],
+                                     ArrLike[Volatility])
+
+    @classmethod
+    def CallVannaValue(cls, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                       Volatility):
+        '''
+        12.1-看涨期权CallVannaValue
+        :param Direction:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = Volatility * (Time ** 0.5)
+        d1 = (np.log(UnderlyingPrice / ExercisePrice) + (
+                InterestRate - DividendRate + 0.5 * (Volatility ** 2)) * Time) / dt
+        d2 = d1 - dt
+        nd1_partial = norm.pdf(d1)
+        result = -nd1_partial * d2 / Volatility
+        return result
+
+    @classmethod
+    def CallVannaValueForApply(cls, ArrLike, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                               Volatility):
+        '''
+        12.2-看涨期权CallVannaValueForApply
+        :param ArrLike:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = ArrLike[Volatility] * (ArrLike[Time] ** 0.5)
+        d1 = (np.log(ArrLike[UnderlyingPrice] / ArrLike[ExercisePrice]) + (
+                ArrLike[InterestRate] - ArrLike[DividendRate] + 0.5 * (ArrLike[Volatility] ** 2)) * ArrLike[Time]) / dt
+        d2 = d1 - dt
+        nd1_partial = norm.pdf(d1)
+        result = -nd1_partial * d2 / ArrLike[Volatility]
+        return result
+
+    @classmethod
+    def PutVannaValue(cls, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                      Volatility):
+        '''
+        12.3-看跌期权PutVannaValue
+        :param Direction:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = Volatility * (Time ** 0.5)
+        d1 = (np.log(UnderlyingPrice / ExercisePrice) + (
+                InterestRate - DividendRate + 0.5 * (Volatility ** 2)) * Time) / dt
+        d2 = d1 - dt
+        nd1_partial = norm.pdf(d1)
+        result = -nd1_partial * d2 / Volatility
+        return result
+
+    @classmethod
+    def PutVannaValueForApply(cls, ArrLike, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                              Volatility):
+        '''
+        12.4-看跌期权PutVannaValueForApply
+        :param ArrLike:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = ArrLike[Volatility] * (ArrLike[Time] ** 0.5)
+        d1 = (np.log(ArrLike[UnderlyingPrice] / ArrLike[ExercisePrice]) + (
+                ArrLike[InterestRate] - ArrLike[DividendRate] + 0.5 * (ArrLike[Volatility] ** 2)) * ArrLike[Time]) / dt
+        d2 = d1 - dt
+        nd1_partial = norm.pdf(d1)
+        result = -nd1_partial * d2 / ArrLike[Volatility]
+        return result
+
+    @classmethod
+    def VannaValueForApply(cls, ArrLike, Direction, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                           Volatility):
+        '''
+        12-Vanna计算VannaValueForApply，c/sigma*s
+        :param ArrLike:
+        :param Direction:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        if ArrLike[Direction] == "认购":
+            return cls.CallVannaValue(ArrLike[UnderlyingPrice], ArrLike[ExercisePrice], ArrLike[Time],
+                                      ArrLike[InterestRate],
+                                      ArrLike[DividendRate],
+                                      ArrLike[Volatility])
+        else:
+            return cls.PutVannaValue(ArrLike[UnderlyingPrice], ArrLike[ExercisePrice], ArrLike[Time],
+                                     ArrLike[InterestRate],
+                                     ArrLike[DividendRate],
+                                     ArrLike[Volatility])
+
+    @classmethod
+    def CallCharmValue(cls, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                       Volatility):
+        '''
+        13.1-看涨期权CallCharmValue
+        :param Direction:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = Volatility * (Time ** 0.5)
+        d1 = (np.log(UnderlyingPrice / ExercisePrice) + (
+                InterestRate - DividendRate + 0.5 * (Volatility ** 2)) * Time) / dt
+        d2 = d1 - dt
+        nd1_partial = norm.pdf(d1)
+        result = -nd1_partial * (2 * InterestRate * Time - d2 * dt) / (2 * Time * dt)
+        return result
+
+    @classmethod
+    def CallCharmValueForApply(cls, ArrLike, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                               Volatility):
+        '''
+        13.2-看涨期权CallCharmValueForApply
+        :param ArrLike:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = ArrLike[Volatility] * (ArrLike[Time] ** 0.5)
+        d1 = (np.log(ArrLike[UnderlyingPrice] / ArrLike[ExercisePrice]) + (
+                ArrLike[InterestRate] - ArrLike[DividendRate] + 0.5 * (ArrLike[Volatility] ** 2)) * ArrLike[Time]) / dt
+        d2 = d1 - dt
+        nd1_partial = norm.pdf(d1)
+        result = -nd1_partial * (2 * ArrLike[InterestRate] * ArrLike[Time] - d2 * dt) / (2 * ArrLike[Time] * dt)
+        return result
+
+    @classmethod
+    def PutCharmValue(cls, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                      Volatility):
+        '''
+        13.3-看跌期权PutCharmValue
+        :param Direction:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = Volatility * (Time ** 0.5)
+        d1 = (np.log(UnderlyingPrice / ExercisePrice) + (
+                InterestRate - DividendRate + 0.5 * (Volatility ** 2)) * Time) / dt
+        d2 = d1 - dt
+        nd1_partial = norm.pdf(d1)
+        result = -nd1_partial * (2 * InterestRate * Time - d2 * dt) / (2 * Time * dt)
+        return result
+
+    @classmethod
+    def PutCharmValueForApply(cls, ArrLike, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                              Volatility):
+        '''
+        13.4-看跌期权PutCharmValueForApply
+        :param ArrLike:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = ArrLike[Volatility] * (ArrLike[Time] ** 0.5)
+        d1 = (np.log(ArrLike[UnderlyingPrice] / ArrLike[ExercisePrice]) + (
+                ArrLike[InterestRate] - ArrLike[DividendRate] + 0.5 * (ArrLike[Volatility] ** 2)) * ArrLike[Time]) / dt
+        d2 = d1 - dt
+        nd1_partial = norm.pdf(d1)
+        result = -nd1_partial * (2 * ArrLike[InterestRate] * ArrLike[Time] - d2 * dt) / (2 * ArrLike[Time] * dt)
+        return result
+
+    @classmethod
+    def CharmValueForApply(cls, ArrLike, Direction, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                           Volatility):
+        '''
+        13-Charm计算CharmValueForApply，c/s*t
+        :param ArrLike:
+        :param Direction:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        if ArrLike[Direction] == "认购":
+            return cls.CallCharmValue(ArrLike[UnderlyingPrice], ArrLike[ExercisePrice], ArrLike[Time],
+                                      ArrLike[InterestRate],
+                                      ArrLike[DividendRate],
+                                      ArrLike[Volatility])
+        else:
+            return cls.PutCharmValue(ArrLike[UnderlyingPrice], ArrLike[ExercisePrice], ArrLike[Time],
+                                     ArrLike[InterestRate],
+                                     ArrLike[DividendRate],
+                                     ArrLike[Volatility])
+
+    @classmethod
+    def CallVetaValue(cls, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                      Volatility):
+        '''
+        14.1-看涨期权CallVetaValue
+        :param Direction:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = Volatility * (Time ** 0.5)
+        d1 = (np.log(UnderlyingPrice / ExercisePrice) + (
+                InterestRate - DividendRate + 0.5 * (Volatility ** 2)) * Time) / dt
+        d2 = d1 - dt
+        nd1_partial = norm.pdf(d1)
+        result = UnderlyingPrice * nd1_partial * (Time ** 0.5) * (InterestRate * d1 / dt - (1 + d1 * d2) / (2 * Time))
+        return result
+
+    @classmethod
+    def CallVetaValueForApply(cls, ArrLike, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                              Volatility):
+        '''
+        14.2-看涨期权CallVetaValueForApply
+        :param ArrLike:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = ArrLike[Volatility] * (ArrLike[Time] ** 0.5)
+        d1 = (np.log(ArrLike[UnderlyingPrice] / ArrLike[ExercisePrice]) + (
+                ArrLike[InterestRate] - ArrLike[DividendRate] + 0.5 * (ArrLike[Volatility] ** 2)) * ArrLike[Time]) / dt
+        d2 = d1 - dt
+        nd1_partial = norm.pdf(d1)
+        result = ArrLike[UnderlyingPrice] * nd1_partial * (ArrLike[Time] ** 0.5) * (
+                ArrLike[InterestRate] * d1 / dt - (1 + d1 * d2) / (2 * ArrLike[Time]))
+        return result
+
+    @classmethod
+    def PutVetaValue(cls, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                     Volatility):
+        '''
+        14.3-看跌期权PutVetaValue
+        :param Direction:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = Volatility * (Time ** 0.5)
+        d1 = (np.log(UnderlyingPrice / ExercisePrice) + (
+                InterestRate - DividendRate + 0.5 * (Volatility ** 2)) * Time) / dt
+        d2 = d1 - dt
+        nd1_partial = norm.pdf(d1)
+        result = UnderlyingPrice * nd1_partial * (Time ** 0.5) * (InterestRate * d1 / dt - (1 + d1 * d2) / (2 * Time))
+        return result
+
+    @classmethod
+    def PutVetaValueForApply(cls, ArrLike, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                             Volatility):
+        '''
+        14.4-看跌期权PutVetaValueForApply
+        :param ArrLike:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        dt = ArrLike[Volatility] * (ArrLike[Time] ** 0.5)
+        d1 = (np.log(ArrLike[UnderlyingPrice] / ArrLike[ExercisePrice]) + (
+                ArrLike[InterestRate] - ArrLike[DividendRate] + 0.5 * (ArrLike[Volatility] ** 2)) * ArrLike[Time]) / dt
+        d2 = d1 - dt
+        nd1_partial = norm.pdf(d1)
+        result = ArrLike[UnderlyingPrice] * nd1_partial * (ArrLike[Time] ** 0.5) * (
+                ArrLike[InterestRate] * d1 / dt - (1 + d1 * d2) / (2 * ArrLike[Time]))
+        return result
+
+    @classmethod
+    def VetaValueForApply(cls, ArrLike, Direction, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
+                          Volatility):
+        '''
+        14-Veta计算VetaValueForApply，c/t*sigma
+        :param ArrLike:
+        :param Direction:
+        :param UnderlyingPrice:
+        :param ExercisePrice:
+        :param Time:
+        :param InterestRate:
+        :param DividendRate:
+        :param Volatility:
+        :return:
+        '''
+        if ArrLike[Direction] == "认购":
+            return cls.CallVetaValue(ArrLike[UnderlyingPrice], ArrLike[ExercisePrice], ArrLike[Time],
+                                     ArrLike[InterestRate],
+                                     ArrLike[DividendRate],
+                                     ArrLike[Volatility])
+        else:
+            return cls.PutVetaValue(ArrLike[UnderlyingPrice], ArrLike[ExercisePrice], ArrLike[Time],
+                                    ArrLike[InterestRate],
+                                    ArrLike[DividendRate],
+                                    ArrLike[Volatility])
 
 
 class OptionContractMinuteData(OptionContract, TradeCalendar):
