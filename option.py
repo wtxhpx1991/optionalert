@@ -5,12 +5,12 @@ from scipy.stats import norm
 import datetime as dt
 
 w.start()
-
 global ContractSetData
+
 
 def ContractSet(exchange="sse", windcode="510050.SH", status="all"):
     '''
-    获取期权合约数据集
+    获取期权合约数据集，写在OptionContract类外面，赋值给全局变量ContractSetData，避免频繁调用w.wset函数。
     :return: 返回期权合约数据集，pandas.dataframe
     '''
     parameter = "exchange=" + exchange + ";" + "windcode=" + windcode + ";" + "status=" + status
@@ -22,7 +22,8 @@ def ContractSet(exchange="sse", windcode="510050.SH", status="all"):
 
     return OptionContractNameData
 
-ContractSetData=ContractSet()
+
+ContractSetData = ContractSet()
 
 
 class OptionContract:
@@ -1555,4 +1556,5 @@ class OptionMinuteData(OptionContract, TradeCalendar):
         # dt.datetime.strptime(StartDateTime, "%Y-%m-%d %H:%M:%S").date().strftime("%Y-%m-%d")
         StartDate = StartDateTime.split(" ")[0]
         EndDate = EndDateTime.split(" ")[0]
-        cls.GetListedContractBetweenGivenDate(StartDate, EndDate)
+        ContractSetBetweenStartAndEnd = list(cls.GetListedContractBetweenGivenDate(StartDate, EndDate).index)
+        return cls.GetRawDataForGivenContract(",".join(ContractSetBetweenStartAndEnd), StartDateTime, EndDateTime)

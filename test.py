@@ -5,8 +5,20 @@ TEST = {"Direction": ["认购", "认沽"], "UnderlyingPrice": [3.05, 3.05], "Exe
         "Close": [0.12, 0.12]}
 TEST_df = pd.DataFrame(TEST)
 
-option.ContractSetData()
 
+
+
+StartDateTime="2019-10-31 08:00:00"
+EndDateTime="2019-11-04 20:00:00"
+StartDate="2019-10-31"
+EndDate="2019-11-04"
+WindCode="10002008.SH"
+
+
+
+
+option.ContractSetData
+option.OptionContract.GetListedContractOnGivenDate("2019-11-04")
 
 if __name__=="__main__":
     option.OptionGreeksMethod.EuropeanCallPrice(3.05, 3, 0.1234, 0.025, 0, 0.2)
