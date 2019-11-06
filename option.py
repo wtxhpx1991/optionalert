@@ -135,40 +135,126 @@ class OptionContract:
 
 class TradeCalendar:
     '''
-    获取交易日历
+    获取交易日历，包含以下几种方法：
+    1-返回起始日期至终止日期的交易日历TradeCalendarStartToEnd
+    2-返回给定日期前后一段时间的交易日历
+    3-返回起始日期至终止日期的交易日天数
     '''
 
-    def __init__(self, StartDate, EndDate):
+    # def __init__(self, StartDate, EndDate):
+    #     '''
+    #     使用wind接口获取交易日历
+    #     :param StartDate: 起始日期%Y-%m-%d
+    #     :param EndDate: 终止日期%Y-%m-%d
+    #     '''
+    #     self.StartDate = StartDate
+    #     self.EndDate = EndDate
+    #
+    # # w.tdays("2018-01-01", "2020-12-31", "TradingCalendar=SZSE").Times
+    # # dt.datetime.today().date().strftime('%Y-%m-%d')
+    # @staticmethod
+    # def DateInterVal(DateInterval=365):
+    #     '''
+    #     静态方法，初始化实例可返回以当前日向前后一段时间的实例
+    #     :param DateInterval:日期，int格式
+    #     :return:
+    #     '''
+    #     StartDate = dt.datetime.today().date() + dt.timedelta(days=-DateInterval)
+    #     EndDate = dt.datetime.today().date() + dt.timedelta(days=DateInterval)
+    #     StartDate = StartDate.strftime('%Y-%m-%d')
+    #     EndDate = EndDate.strftime('%Y-%m-%d')
+    #     return TradeCalendar(StartDate, EndDate)
+    #
+    # @property
+    # def TradeCalendarData(self):
+    #     '''
+    #     定义属性，返回日历数据
+    #     :return: 返回日历数据，list格式，每一个元素为datetime.date格式
+    #     '''
+    #     return w.tdays(self.StartDate, self.EndDate, "TradingCalendar=SZSE").Times
+    # @classmethod
+    # def IntervalDaysCount(cls):
+    #     '''
+    #
+    #     :return:
+    #     '''
+    #     pass
+    @classmethod
+    def TradeCalendarStartToEnd(cls, StartDate, EndDate):
         '''
-        使用wind接口获取交易日历
-        :param StartDate: 起始日期%Y-%m-%d
-        :param EndDate: 终止日期%Y-%m-%d
+        输入起始日期和终止日期，获取期间交易日历
+        :param StartDate:"%Y-%m-%d"
+        :param EndDate:"%Y-%m-%d"
+        :return:返回日历数据，list格式，每一个元素为datetime.date格式
         '''
-        self.StartDate = StartDate
-        self.EndDate = EndDate
+        return w.tdays(StartDate, EndDate, "").Times
 
-    # w.tdays("2018-01-01", "2020-12-31", "TradingCalendar=SZSE").Times
-    # dt.datetime.today().date().strftime('%Y-%m-%d')
-    @staticmethod
-    def DateInterVal(DateInterval=365):
+    @classmethod
+    def TradeCalendarBeforeToAfter(cls, IntervalDays):
         '''
-        静态方法，初始化实例可返回以当前日向前后一段时间的实例
-        :param DateInterval:日期，int格式
+        输入自然日天数，输出今日前后IntervalDays的交易日历
+        :param NaturalDays:
         :return:
         '''
-        StartDate = dt.datetime.today().date() + dt.timedelta(days=-DateInterval)
-        EndDate = dt.datetime.today().date() + dt.timedelta(days=DateInterval)
+        StartDate = dt.datetime.today().date() + dt.timedelta(days=-IntervalDays)
+        EndDate = dt.datetime.today().date() + dt.timedelta(days=IntervalDays)
         StartDate = StartDate.strftime('%Y-%m-%d')
         EndDate = EndDate.strftime('%Y-%m-%d')
-        return TradeCalendar(StartDate, EndDate)
+        return cls().TradeCalendarStartToEnd(StartDate, EndDate)
 
-    @property
-    def TradeCalendarData(self):
+    @classmethod
+    def TradeDaysCount(cls, StartDate, EndDate):
         '''
-        定义属性，返回日历数据
-        :return: 返回日历数据，list格式，每一个元素为datetime.date格式
+        计算起始日期至终止日期期间的交易日天数
+        :param StartDate:
+        :param EndDate:
+        :return:
         '''
-        return w.tdays(self.StartDate, self.EndDate, "TradingCalendar=SZSE").Times
+        trade_calendar = cls.TradeCalendarStartToEnd(StartDate, EndDate)
+        StartDateFormat = dt.datetime.strptime(StartDate, "%Y-%m-%d").date()
+        EndDateFormat = dt.datetime.strptime(EndDate, "%Y-%m-%d").date()
+        return trade_calendar.index(EndDateFormat) - trade_calendar.index(StartDateFormat) + 1
+
+    @classmethod
+    def TradeDaysCountForApply(cls, ArrLike, StartDate, EndDate):
+        '''
+        计算起始日期至终止日期期间的交易日天数
+        :param ArrLike:
+        :param StartDate:
+        :param EndDate:
+        :return:
+        '''
+        trade_calendar = cls.TradeCalendarStartToEnd(ArrLike[StartDate], ArrLike[EndDate])
+        StartDateFormat = dt.datetime.strptime(ArrLike[StartDate], "%Y-%m-%d").date()
+        EndDateFormat = dt.datetime.strptime(ArrLike[EndDate], "%Y-%m-%d").date()
+        return trade_calendar.index(EndDateFormat) - trade_calendar.index(StartDateFormat) + 1
+
+    @classmethod
+    def TradeDaysCountAnnualized(cls, StartDate, EndDate):
+        '''
+        计算起始日期至终止日期期间的交易日天数
+        :param StartDate:
+        :param EndDate:
+        :return:
+        '''
+        trade_calendar = cls.TradeCalendarStartToEnd(StartDate, EndDate)
+        StartDateFormat = dt.datetime.strptime(StartDate, "%Y-%m-%d").date()
+        EndDateFormat = dt.datetime.strptime(EndDate, "%Y-%m-%d").date()
+        return (trade_calendar.index(EndDateFormat) - trade_calendar.index(StartDateFormat) + 1) / 252
+
+    @classmethod
+    def TradeDaysCountAnnualizedForApply(cls, ArrLike, StartDate, EndDate):
+        '''
+        计算起始日期至终止日期期间的交易日天数
+        :param ArrLike:
+        :param StartDate:
+        :param EndDate:
+        :return:
+        '''
+        trade_calendar = cls.TradeCalendarStartToEnd(ArrLike[StartDate], ArrLike[EndDate])
+        StartDateFormat = dt.datetime.strptime(ArrLike[StartDate], "%Y-%m-%d").date()
+        EndDateFormat = dt.datetime.strptime(ArrLike[EndDate], "%Y-%m-%d").date()
+        return (trade_calendar.index(EndDateFormat) - trade_calendar.index(StartDateFormat) + 1) / 252
 
 
 class OptionGreeksMethod:
@@ -708,7 +794,6 @@ class OptionGreeksMethod:
                                     ArrLike[DividendRate],
                                     ArrLike[Volatility])
 
-    # TODO 计算希腊字母
     @classmethod
     def CallThetaValue(cls, UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
                        Volatility):
@@ -1401,11 +1486,20 @@ class OptionGreeksMethod:
                                     ArrLike[Volatility])
 
 
-class OptionContractMinuteData(OptionContract, TradeCalendar):
+# ToDo 数据接口
+class OptionMinuteData(OptionContract, TradeCalendar):
     '''
     分钟级交易数据类，通过wind接口导入分钟级行情数据，并做格式化处理
     '''
 
     # OptionContract.ContractSet()[OptionContract.ContractSet()['contract_state'] == "上市"].index
-    def __init__(self):
+    # OptionContractMinuteData.DateInterVal(365).TradeCalendarData
+    @classmethod
+    def GetRawData(cls, StartDate, EndDate):
+        '''
+        使用wind数据接口导入分钟级行情数据，输入起始日期和终止日期，默认获取起始日期至终止日期期间所有挂牌交易合约的原始数据
+        :param StartDate:"%Y-%m-%d"
+        :param EndDate:"%Y-%m-%d"
+        :return:
+        '''
         pass
