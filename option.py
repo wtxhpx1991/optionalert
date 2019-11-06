@@ -1514,7 +1514,7 @@ class OptionMinuteData(OptionContract, TradeCalendar):
     # OptionContract.ContractSet()[OptionContract.ContractSet()['contract_state'] == "上市"].index
     # OptionContractMinuteData.DateInterVal(365).TradeCalendarData
     @classmethod
-    def GetRawData(cls, WindCode, StartDateTime, EndDateTime):
+    def GetRawDataForGivenContract(cls, WindCode, StartDateTime, EndDateTime):
         '''
         1-获取起始日期至终止日期指定合约数据
         有个坑，wind接口中，如果windcode只有一个合约，是没有windcode这个字段的
@@ -1543,3 +1543,17 @@ class OptionMinuteData(OptionContract, TradeCalendar):
             OptionContractMinuteData['date'] = OptionContractMinuteData['datetime'].dt.date
             OptionContractMinuteData['time'] = OptionContractMinuteData['datetime'].dt.time
         return OptionContractMinuteData
+
+    # Todo 还没写完
+    @classmethod
+    def GetRawDataForListedContract(cls, StartDateTime, EndDateTime):
+        '''
+        2-获取起始日期至终止日期所有曾挂牌交易过的合约数据
+        :param StartDateTime:%Y-%m-%d %H:%M:%S
+        :param EndDateTime:%Y-%m-%d %H:%M:%S
+        :return:
+        '''
+        # dt.datetime.strptime(StartDateTime, "%Y-%m-%d %H:%M:%S").date().strftime("%Y-%m-%d")
+        StartDate = StartDateTime.split(" ")[0]
+        EndDate = EndDateTime.split(" ")[0]
+        cls.GetListedContractBetweenGivenDate(StartDate, EndDate)
