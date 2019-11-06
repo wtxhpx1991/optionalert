@@ -6,9 +6,11 @@ import datetime as dt
 
 w.start()
 global ContractSetData
+global UnderlyingSecurity
+UnderlyingSecurity = "510050.SH"
 
 
-def ContractSet(exchange="sse", windcode="510050.SH", status="all"):
+def ContractSet(exchange="sse", windcode=UnderlyingSecurity, status="all"):
     '''
     获取期权合约数据集，写在OptionContract类外面，赋值给全局变量ContractSetData，避免频繁调用w.wset函数。
     :return: 返回期权合约数据集，pandas.dataframe
@@ -1504,8 +1506,9 @@ class OptionMinuteData(OptionContract, TradeCalendar):
     分钟级交易数据类，通过wind接口导入分钟级行情数据，并做格式化处理
     1-获取起始日期至终止日期指定合约数据
     2-获取起始日期至终止日期所有曾挂牌交易过的合约数据
-    3-匹配现货标的交易数据
-    4-计算希腊字母包括ImpliedVolatility\Delta\Gamma\Vega\Theta\Rho，其余greeks自行添加
+    3-获取起始日期至终止日期标的ETF交易数据
+    4-匹配现货标的交易数据
+    5-计算希腊字母包括ImpliedVolatility\Delta\Gamma\Vega\Theta\Rho，其余greeks自行添加
     '''
 
     # OptionContract.ContractSet()[OptionContract.ContractSet()['contract_state'] == "上市"].index
@@ -1555,6 +1558,35 @@ class OptionMinuteData(OptionContract, TradeCalendar):
         EndDate = EndDateTime.split(" ")[0]
         ContractSetBetweenStartAndEnd = list(cls.GetListedContractBetweenGivenDate(StartDate, EndDate).index)
         return cls.GetRawDataForGivenContract(",".join(ContractSetBetweenStartAndEnd), StartDateTime, EndDateTime)
+
     @classmethod
-    def GetRawDataForVertialContract(cls):
-        pass
+    def GetRawDataForUnderlyingSecurity(cls, StartDateTime, EndDateTime):
+        '''
+        3-获取起始日期至终止日期标的ETF交易数据
+        :param StartDateTime:
+        :param EndDateTime:
+        :return:
+        '''
+        UnderlyingSecurityMinuteRawData = w.wsi(UnderlyingSecurity,
+                                                "open,high,low,close,volume,amt,chg,pct_chg,oi",
+                                                StartDateTime, EndDateTime, "Fill=Previous;PriceAdj=F")
+        UnderlyingSecurityMinuteData = pd.DataFrame(UnderlyingSecurityMinuteRawData.Data).T
+        UnderlyingSecurityMinuteData.columns = UnderlyingSecurityMinuteRawData.Fields
+        UnderlyingSecurityMinuteData.insert(0, 'windcode', UnderlyingSecurityMinuteRawData.Codes[0])
+        UnderlyingSecurityMinuteData['datetime'] = UnderlyingSecurityMinuteRawData.Times
+        UnderlyingSecurityMinuteData['date'] = UnderlyingSecurityMinuteData['datetime'].dt.date
+        UnderlyingSecurityMinuteData['time'] = UnderlyingSecurityMinuteData['datetime'].dt.time
+        return UnderlyingSecurityMinuteData
+
+    @classmethod
+    def GetDataForListedContractAndUnderlyingSecurity(cls, StartDateTime, EndDateTime):
+        '''
+        4-匹配现货标的交易数据
+        :param StartDateTime:
+        :param EndDateTime:
+        :return:
+        '''
+        RawDataForListedContract = cls.GetRawDataForListedContract(StartDateTime, EndDateTime)
+        RawDataForUnderlyingSecurity = cls.GetRawDataForUnderlyingSecurity(StartDateTime, EndDateTime)
+        OptionContractData = pd.merge(RawDataForListedContract, RawDataForUnderlyingSecurity, left_on="datetime",
+                                      right_on="datetime", how="left", suffixes=("_op", "_etf"))
