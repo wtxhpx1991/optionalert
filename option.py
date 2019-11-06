@@ -1504,11 +1504,8 @@ class OptionMinuteData(OptionContract, TradeCalendar):
     分钟级交易数据类，通过wind接口导入分钟级行情数据，并做格式化处理
     1-获取起始日期至终止日期指定合约数据
     2-获取起始日期至终止日期所有曾挂牌交易过的合约数据
-    3-获取起始日期至终止日期单一合约及其水平合约数据
-    4-获取起始日期至终止日期单一合约及其垂直合约数据
-    5-获取起始日期至终止日期单一合约及其T型合约数据
-    6-匹配现货标的交易数据
-    7-计算希腊字母包括ImpliedVolatility\Delta\Gamma\Vega\Theta\Rho，其余greeks自行添加
+    3-匹配现货标的交易数据
+    4-计算希腊字母包括ImpliedVolatility\Delta\Gamma\Vega\Theta\Rho，其余greeks自行添加
     '''
 
     # OptionContract.ContractSet()[OptionContract.ContractSet()['contract_state'] == "上市"].index
@@ -1558,3 +1555,6 @@ class OptionMinuteData(OptionContract, TradeCalendar):
         EndDate = EndDateTime.split(" ")[0]
         ContractSetBetweenStartAndEnd = list(cls.GetListedContractBetweenGivenDate(StartDate, EndDate).index)
         return cls.GetRawDataForGivenContract(",".join(ContractSetBetweenStartAndEnd), StartDateTime, EndDateTime)
+    @classmethod
+    def GetRawDataForVertialContract(cls):
+        pass

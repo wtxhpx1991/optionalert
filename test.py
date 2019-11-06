@@ -14,6 +14,7 @@ StartDate="2019-10-31"
 EndDate="2019-11-04"
 WindCode="10002008.SH"
 
+CC=OptionMinuteData.GetRawDataForListedContract(EndDateTime, EndDateTime)
 
 
 
