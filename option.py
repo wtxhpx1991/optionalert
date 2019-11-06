@@ -200,7 +200,7 @@ class TradeCalendar:
         EndDate = dt.datetime.today().date() + dt.timedelta(days=IntervalDays)
         StartDate = StartDate.strftime('%Y-%m-%d')
         EndDate = EndDate.strftime('%Y-%m-%d')
-        return cls().TradeCalendarStartToEnd(StartDate, EndDate)
+        return cls.TradeCalendarStartToEnd(StartDate, EndDate)
 
     @classmethod
     def TradeDaysCount(cls, StartDate, EndDate):
@@ -213,7 +213,16 @@ class TradeCalendar:
         trade_calendar = cls.TradeCalendarStartToEnd(StartDate, EndDate)
         StartDateFormat = dt.datetime.strptime(StartDate, "%Y-%m-%d").date()
         EndDateFormat = dt.datetime.strptime(EndDate, "%Y-%m-%d").date()
-        return trade_calendar.index(EndDateFormat) - trade_calendar.index(StartDateFormat) + 1
+        try:
+            StartDateIndex = trade_calendar.index(StartDateFormat)
+            EndDateIndex = trade_calendar.index(EndDateFormat)
+        except ValueError:
+            for x in trade_calendar:
+                if x >= dt.datetime.strptime(StartDate, "%Y-%m-%d").date():
+                    StartDateIndex = trade_calendar.index(x)
+                    break
+            EndDateIndex = len(trade_calendar) - 1
+        return EndDateIndex - StartDateIndex + 1
 
     @classmethod
     def TradeDaysCountForApply(cls, ArrLike, StartDate, EndDate):
@@ -227,7 +236,16 @@ class TradeCalendar:
         trade_calendar = cls.TradeCalendarStartToEnd(ArrLike[StartDate], ArrLike[EndDate])
         StartDateFormat = dt.datetime.strptime(ArrLike[StartDate], "%Y-%m-%d").date()
         EndDateFormat = dt.datetime.strptime(ArrLike[EndDate], "%Y-%m-%d").date()
-        return trade_calendar.index(EndDateFormat) - trade_calendar.index(StartDateFormat) + 1
+        try:
+            StartDateIndex = trade_calendar.index(StartDateFormat)
+            EndDateIndex = trade_calendar.index(EndDateFormat)
+        except ValueError:
+            for x in trade_calendar:
+                if x >= dt.datetime.strptime(ArrLike[StartDate], "%Y-%m-%d").date():
+                    StartDateIndex = trade_calendar.index(x)
+                    break
+            EndDateIndex = len(trade_calendar) - 1
+        return EndDateIndex - StartDateIndex + 1
 
     @classmethod
     def TradeDaysCountAnnualized(cls, StartDate, EndDate):
@@ -240,7 +258,16 @@ class TradeCalendar:
         trade_calendar = cls.TradeCalendarStartToEnd(StartDate, EndDate)
         StartDateFormat = dt.datetime.strptime(StartDate, "%Y-%m-%d").date()
         EndDateFormat = dt.datetime.strptime(EndDate, "%Y-%m-%d").date()
-        return (trade_calendar.index(EndDateFormat) - trade_calendar.index(StartDateFormat) + 1) / 252
+        try:
+            StartDateIndex = trade_calendar.index(StartDateFormat)
+            EndDateIndex = trade_calendar.index(EndDateFormat)
+        except ValueError:
+            for x in trade_calendar:
+                if x >= dt.datetime.strptime(StartDate, "%Y-%m-%d").date():
+                    StartDateIndex = trade_calendar.index(x)
+                    break
+            EndDateIndex = len(trade_calendar) - 1
+        return (EndDateIndex - StartDateIndex + 1) / 252
 
     @classmethod
     def TradeDaysCountAnnualizedForApply(cls, ArrLike, StartDate, EndDate):
@@ -254,7 +281,16 @@ class TradeCalendar:
         trade_calendar = cls.TradeCalendarStartToEnd(ArrLike[StartDate], ArrLike[EndDate])
         StartDateFormat = dt.datetime.strptime(ArrLike[StartDate], "%Y-%m-%d").date()
         EndDateFormat = dt.datetime.strptime(ArrLike[EndDate], "%Y-%m-%d").date()
-        return (trade_calendar.index(EndDateFormat) - trade_calendar.index(StartDateFormat) + 1) / 252
+        try:
+            StartDateIndex = trade_calendar.index(StartDateFormat)
+            EndDateIndex = trade_calendar.index(EndDateFormat)
+        except ValueError:
+            for x in trade_calendar:
+                if x >= dt.datetime.strptime(ArrLike[StartDate], "%Y-%m-%d").date():
+                    StartDateIndex = trade_calendar.index(x)
+                    break
+            EndDateIndex = len(trade_calendar) - 1
+        return (EndDateIndex - StartDateIndex + 1) / 252
 
 
 class OptionGreeksMethod:
