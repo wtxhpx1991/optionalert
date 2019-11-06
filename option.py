@@ -255,19 +255,7 @@ class TradeCalendar:
         :param EndDate:
         :return:
         '''
-        trade_calendar = cls.TradeCalendarStartToEnd(StartDate, EndDate)
-        StartDateFormat = dt.datetime.strptime(StartDate, "%Y-%m-%d").date()
-        EndDateFormat = dt.datetime.strptime(EndDate, "%Y-%m-%d").date()
-        try:
-            StartDateIndex = trade_calendar.index(StartDateFormat)
-            EndDateIndex = trade_calendar.index(EndDateFormat)
-        except ValueError:
-            for x in trade_calendar:
-                if x >= dt.datetime.strptime(StartDate, "%Y-%m-%d").date():
-                    StartDateIndex = trade_calendar.index(x)
-                    break
-            EndDateIndex = len(trade_calendar) - 1
-        return (EndDateIndex - StartDateIndex + 1) / 252
+        return cls.TradeDaysCount(StartDate, EndDate) / 252
 
     @classmethod
     def TradeDaysCountAnnualizedForApply(cls, ArrLike, StartDate, EndDate):
@@ -278,19 +266,7 @@ class TradeCalendar:
         :param EndDate:
         :return:
         '''
-        trade_calendar = cls.TradeCalendarStartToEnd(ArrLike[StartDate], ArrLike[EndDate])
-        StartDateFormat = dt.datetime.strptime(ArrLike[StartDate], "%Y-%m-%d").date()
-        EndDateFormat = dt.datetime.strptime(ArrLike[EndDate], "%Y-%m-%d").date()
-        try:
-            StartDateIndex = trade_calendar.index(StartDateFormat)
-            EndDateIndex = trade_calendar.index(EndDateFormat)
-        except ValueError:
-            for x in trade_calendar:
-                if x >= dt.datetime.strptime(ArrLike[StartDate], "%Y-%m-%d").date():
-                    StartDateIndex = trade_calendar.index(x)
-                    break
-            EndDateIndex = len(trade_calendar) - 1
-        return (EndDateIndex - StartDateIndex + 1) / 252
+        return cls.TradeDaysCount(ArrLike[StartDate], ArrLike[EndDate]) / 252
 
 
 class OptionGreeksMethod:
