@@ -1502,16 +1502,44 @@ class OptionGreeksMethod:
 class OptionMinuteData(OptionContract, TradeCalendar):
     '''
     分钟级交易数据类，通过wind接口导入分钟级行情数据，并做格式化处理
+    1-获取起始日期至终止日期指定合约数据
+    2-获取起始日期至终止日期所有曾挂牌交易过的合约数据
+    3-获取起始日期至终止日期单一合约及其水平合约数据
+    4-获取起始日期至终止日期单一合约及其垂直合约数据
+    5-获取起始日期至终止日期单一合约及其T型合约数据
+    6-匹配现货标的交易数据
+    7-计算希腊字母包括ImpliedVolatility\Delta\Gamma\Vega\Theta\Rho，其余greeks自行添加
     '''
 
     # OptionContract.ContractSet()[OptionContract.ContractSet()['contract_state'] == "上市"].index
     # OptionContractMinuteData.DateInterVal(365).TradeCalendarData
     @classmethod
-    def GetRawData(cls, StartDate, EndDate):
+    def GetRawData(cls, WindCode, StartDateTime, EndDateTime):
         '''
-        使用wind数据接口导入分钟级行情数据，输入起始日期和终止日期，默认获取起始日期至终止日期期间所有挂牌交易合约的原始数据
-        :param StartDate:"%Y-%m-%d"
-        :param EndDate:"%Y-%m-%d"
+        1-获取起始日期至终止日期指定合约数据
+        有个坑，wind接口中，如果windcode只有一个合约，是没有windcode这个字段的
+        :param WindCode:
+        :param StartDateTime:%Y-%m-%d %H:%M:%S
+        :param EndDateTime:%Y-%m-%d %H:%M:%S
         :return:
         '''
-        pass
+        if len(WindCode.split(",")) == 1:
+            OptionContractMinuteRawData = w.wsi(WindCode,
+                                                "open,high,low,close,volume,amt,chg,pct_chg,oi",
+                                                StartDateTime, EndDateTime, "Fill=Previous;PriceAdj=F")
+            OptionContractMinuteData = pd.DataFrame(OptionContractMinuteRawData.Data).T
+            OptionContractMinuteData.columns = OptionContractMinuteRawData.Fields
+            OptionContractMinuteData.insert(0, 'windcode', OptionContractMinuteRawData.Codes[0])
+            OptionContractMinuteData['datetime'] = OptionContractMinuteRawData.Times
+            OptionContractMinuteData['date'] = OptionContractMinuteData['datetime'].dt.date
+            OptionContractMinuteData['time'] = OptionContractMinuteData['datetime'].dt.time
+        else:
+            OptionContractMinuteRawData = w.wsi(WindCode,
+                                                "open,high,low,close,volume,amt,chg,pct_chg,oi",
+                                                StartDateTime, EndDateTime, "Fill=Previous;PriceAdj=F")
+            OptionContractMinuteData = pd.DataFrame(OptionContractMinuteRawData.Data).T
+            OptionContractMinuteData.columns = OptionContractMinuteRawData.Fields
+            OptionContractMinuteData['datetime'] = OptionContractMinuteRawData.Times
+            OptionContractMinuteData['date'] = OptionContractMinuteData['datetime'].dt.date
+            OptionContractMinuteData['time'] = OptionContractMinuteData['datetime'].dt.time
+        return OptionContractMinuteData
