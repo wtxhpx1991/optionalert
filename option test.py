@@ -140,5 +140,5 @@ OptionData["ImpliedVolatility"] = OptionData.apply(ImpliedVolatility, axis=1, Di
                                                    DividendRate="dividendrate",
                                                    Target="close")
 
-OptionData["ImpliedVolatility"].hist(bins=100)
+OptionData["ImpliedVolatility"].hist(bins=200)
 

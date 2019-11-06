@@ -6,31 +6,30 @@ import datetime as dt
 
 w.start()
 
+global ContractSetData
+
+def ContractSet(exchange="sse", windcode="510050.SH", status="all"):
+    '''
+    获取期权合约数据集
+    :return: 返回期权合约数据集，pandas.dataframe
+    '''
+    parameter = "exchange=" + exchange + ";" + "windcode=" + windcode + ";" + "status=" + status
+    ExchangeLabel = "." + windcode.split(".")[1]  # 判断交易所标签，如"510050.SH"->".SH"
+    OptionContractNameRawData = w.wset("optioncontractbasicinfo", parameter)
+    OptionContractNameData = pd.DataFrame(OptionContractNameRawData.Data).T
+    OptionContractNameData.columns = OptionContractNameRawData.Fields
+    OptionContractNameData.index = OptionContractNameData['wind_code'].map(lambda x: str(x) + ExchangeLabel)
+
+    return OptionContractNameData
+
+ContractSetData=ContractSet()
+
 
 class OptionContract:
     '''
     期权合约类
     ContractSet方法:使用wind接口获取上证50ETF全部合约，包括已经摘牌的合约。
     '''
-
-    def __init__(self, exchange="sse", windcode="510050.SH", status="all"):
-        self.exchange = exchange
-        self.windcode = windcode  # 默认标的为50ETF，将来品种多了后可以调整参数，或者直接实例化
-        self.status = status
-        self.parameter = "exchange=" + exchange + ";" + "windcode=" + windcode + ";" + "status=" + status
-
-    @classmethod
-    def ContractSet(cls):
-        '''
-        获取期权合约数据集
-        :return: 返回期权合约数据集，pandas.dataframe
-        '''
-        ExchangeLabel = "." + cls().windcode.split(".")[1]  # 判断交易所标签，如"510050.SH"->".SH"
-        OptionContractNameRawData = w.wset("optioncontractbasicinfo", cls().parameter)
-        OptionContractNameData = pd.DataFrame(OptionContractNameRawData.Data).T
-        OptionContractNameData.columns = OptionContractNameRawData.Fields
-        OptionContractNameData.index = OptionContractNameData['wind_code'].map(lambda x: str(x) + ExchangeLabel)
-        return OptionContractNameData
 
     @classmethod
     def GetContractInformationByIndex(cls, wind_code):
@@ -39,7 +38,7 @@ class OptionContract:
         :param wind_code:
         :return: 返回期权合约信息，pandas.series
         '''
-        return cls.ContractSet().loc[wind_code, :]
+        return ContractSetData.loc[wind_code, :]
 
     @classmethod
     def GetListedContractOnGivenDate(cls, GivenDate):
@@ -48,8 +47,8 @@ class OptionContract:
         :param GivingDate:给定日期%Y-%m-%d
         :return:返回期权合约数据集，pandas.dataframe
         '''
-        return cls.ContractSet()[(cls.ContractSet()["listed_date"] <= dt.datetime.strptime(GivenDate, "%Y-%m-%d")) & (
-                cls.ContractSet()["expire_date"] >= dt.datetime.strptime(GivenDate, "%Y-%m-%d"))]
+        return ContractSetData[(ContractSetData["listed_date"] <= dt.datetime.strptime(GivenDate, "%Y-%m-%d")) & (
+                ContractSetData["expire_date"] >= dt.datetime.strptime(GivenDate, "%Y-%m-%d"))]
 
     @classmethod
     def GetListedContractAfterGivenDate(cls, GivenDate):
@@ -58,7 +57,7 @@ class OptionContract:
         :param GivingDate:给定日期%Y-%m-%d
         :return:返回期权合约数据集，pandas.dataframe
         '''
-        return cls.ContractSet()[cls.ContractSet()["listed_date"] >= dt.datetime.strptime(GivenDate, "%Y-%m-%d")]
+        return ContractSetData[ContractSetData["listed_date"] >= dt.datetime.strptime(GivenDate, "%Y-%m-%d")]
 
     @classmethod
     def GetListedContractBetweenGivenDate(cls, StartDate, EndDate):
@@ -70,15 +69,15 @@ class OptionContract:
         :return:返回期权合约数据集，pandas.dataframe
         '''
         ListedContractOnStartDate = cls.GetListedContractOnGivenDate(StartDate)
-        ListedContractInTimeInterval = cls.ContractSet()[
-            (cls.ContractSet()["listed_date"] > dt.datetime.strptime(StartDate, "%Y-%m-%d")) & (
-                    cls.ContractSet()["listed_date"] <= dt.datetime.strptime(EndDate, "%Y-%m-%d"))]
+        ListedContractInTimeInterval = ContractSetData[
+            (ContractSetData["listed_date"] > dt.datetime.strptime(StartDate, "%Y-%m-%d")) & (
+                    ContractSetData["listed_date"] <= dt.datetime.strptime(EndDate, "%Y-%m-%d"))]
         return ListedContractOnStartDate.append(ListedContractInTimeInterval)
 
     @classmethod
     def GetVerticalContractByGivenDate(cls, wind_code, GivenDate):
         '''
-        给定期权合约及指定日期，返回其垂直合约列表（不包含本合约）。垂直合约是指同一到期月份不同执行价格的合约。
+        给定期权合约及指定日期，返回其垂直合约列表（包含本合约）。垂直合约是指同一到期月份不同执行价格的合约。
         :param wind_code:例如"10001504.SH"
         :param GivenDate:例如'2019-04-01'
         :return:
@@ -95,7 +94,7 @@ class OptionContract:
     @classmethod
     def GetHorizonContractByGivenDate(cls, wind_code, GivenDate):
         '''
-        给定期权合约及指定日期，返回其水平合约列表（不包含本合约）。水平合约是指同执行价格一不同到期月份的合约。
+        给定期权合约及指定日期，返回其水平合约列表（包含本合约）。水平合约是指同执行价格一不同到期月份的合约。
         :param wind_code:例如"10001504.SH"
         :param GivenDate:例如'2019-04-01'
         :return:

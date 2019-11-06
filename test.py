@@ -5,7 +5,7 @@ TEST = {"Direction": ["认购", "认沽"], "UnderlyingPrice": [3.05, 3.05], "Exe
         "Close": [0.12, 0.12]}
 TEST_df = pd.DataFrame(TEST)
 
-
+option.ContractSetData()
 
 
 if __name__=="__main__":
