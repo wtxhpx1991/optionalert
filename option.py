@@ -1582,9 +1582,46 @@ class OptionMinuteData(OptionContract, TradeCalendar, OptionGreeksMethod):
         return UnderlyingSecurityMinuteData
 
     @classmethod
+    def GetDataForGivenContractAndUnderlyingSecurity(cls, WindCode, StartDateTime, EndDateTime):
+        '''
+        4.1-匹配现货标的交易数据
+        :param WindCode:
+        :param StartDateTime:
+        :param EndDateTime:
+        :return:
+        '''
+
+        RawDataForListedContract = cls.GetRawDataForGivenContract(WindCode,StartDateTime, EndDateTime)
+        RawDataForUnderlyingSecurity = cls.GetRawDataForUnderlyingSecurity(StartDateTime, EndDateTime)
+        OptionContractDataTemp = pd.merge(RawDataForListedContract, RawDataForUnderlyingSecurity, left_on="datetime",
+                                          right_on="datetime", how="left", suffixes=("_op", "_etf"))
+        OptionContractData = pd.merge(OptionContractDataTemp, ContractSetData, left_on="windcode_op",
+                                      right_index=True, how="left")
+
+        OptionContractData['StartDate'] = OptionContractData["date_op"].map(lambda x: x.strftime('%Y-%m-%d'))
+        # OptionContractData["time_to_exercise"] = OptionContractData.apply(cls.TradeDaysCountAnnualizedForApply, axis=1,
+        #                                                                   StartDate="StartDate", EndDate="exercise_date")
+        # 直接这么算到期时间效率太低
+        # 考虑去重，先针对不同合约不同交易日和不同到期日，实际上，同一天挂牌交易的同一个合约，其逐笔数据的到期交易日都是定的
+        IntervalTempTable1 = OptionContractData[["windcode_op", "StartDate", "exercise_date"]].drop_duplicates()
+        IntervalTempTable2 = OptionContractData[["StartDate", "exercise_date"]].drop_duplicates()
+        IntervalTempTable2["time_to_exercise"] = IntervalTempTable2.apply(
+            OptionMinuteData.TradeDaysCountAnnualizedForApply,
+            axis=1,
+            StartDate="StartDate", EndDate="exercise_date")
+        IntervalTempTable13 = pd.merge(IntervalTempTable1, IntervalTempTable2, on=["StartDate", "exercise_date"],
+                                       how="left")
+        OptionContractData = pd.merge(OptionContractData, IntervalTempTable13,
+                                      on=["windcode_op", "StartDate", "exercise_date"], how="left")
+
+        OptionContractData["InterestRate"] = InterestRate
+        OptionContractData["DividendRate"] = DividendRate
+        return OptionContractData
+
+    @classmethod
     def GetDataForListedContractAndUnderlyingSecurity(cls, StartDateTime, EndDateTime):
         '''
-        4-匹配现货标的交易数据
+        4.2-匹配现货标的交易数据
         :param StartDateTime:
         :param EndDateTime:
         :return:
@@ -1631,3 +1668,36 @@ class OptionMinuteData(OptionContract, TradeCalendar, OptionGreeksMethod):
                                                                          InterestRate="InterestRate",
                                                                          DividendRate="DividendRate",
                                                                          Target="close_op")
+        DataSetForCompute["Delta"] = DataSetForCompute.apply(cls.DeltaValueForApply, axis=1, Direction="call_or_put",
+                                                             UnderlyingPrice="close_etf",
+                                                             ExercisePrice="exercise_price", Time="time_to_exercise",
+                                                             InterestRate="InterestRate",
+                                                             DividendRate="DividendRate",
+                                                             Volatility="ImpliedVolatility")
+        DataSetForCompute["Gamma"] = DataSetForCompute.apply(cls.GammaValueForApply, axis=1, Direction="call_or_put",
+                                                             UnderlyingPrice="close_etf",
+                                                             ExercisePrice="exercise_price", Time="time_to_exercise",
+                                                             InterestRate="InterestRate",
+                                                             DividendRate="DividendRate",
+                                                             Volatility="ImpliedVolatility")
+        DataSetForCompute["Vega"] = DataSetForCompute.apply(cls.VegaValueForApply, axis=1, Direction="call_or_put",
+                                                            UnderlyingPrice="close_etf",
+                                                            ExercisePrice="exercise_price", Time="time_to_exercise",
+                                                            InterestRate="InterestRate",
+                                                            DividendRate="DividendRate",
+                                                            Volatility="ImpliedVolatility")
+        DataSetForCompute["Theta"] = DataSetForCompute.apply(cls.ThetaValueForApply, axis=1, Direction="call_or_put",
+                                                             UnderlyingPrice="close_etf",
+                                                             ExercisePrice="exercise_price", Time="time_to_exercise",
+                                                             InterestRate="InterestRate",
+                                                             DividendRate="DividendRate",
+                                                             Volatility="ImpliedVolatility")
+        DataSetForCompute["Rho"] = DataSetForCompute.apply(cls.RhoValueForApply, axis=1, Direction="call_or_put",
+                                                           UnderlyingPrice="close_etf",
+                                                           ExercisePrice="exercise_price", Time="time_to_exercise",
+                                                           InterestRate="InterestRate",
+                                                           DividendRate="DividendRate",
+                                                           Volatility="ImpliedVolatility")
+        return DataSetForCompute
+
+
