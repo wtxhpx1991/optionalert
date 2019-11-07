@@ -1595,10 +1595,23 @@ class OptionMinuteData(OptionContract, TradeCalendar, OptionGreeksMethod):
                                           right_on="datetime", how="left", suffixes=("_op", "_etf"))
         OptionContractData = pd.merge(OptionContractDataTemp, ContractSetData, left_on="windcode_op",
                                       right_index=True, how="left")
-        # todo 修改
+
         OptionContractData['StartDate'] = OptionContractData["date_op"].map(lambda x: x.strftime('%Y-%m-%d'))
-        OptionContractData["time_to_exercise"] = OptionContractData.apply(cls.TradeDaysCountAnnualizedForApply, axis=1,
-                                                                          StartDate="StartDate", EndDate="exercise_date")
+        # OptionContractData["time_to_exercise"] = OptionContractData.apply(cls.TradeDaysCountAnnualizedForApply, axis=1,
+        #                                                                   StartDate="StartDate", EndDate="exercise_date")
+        # 直接这么算到期时间效率太低
+        # 考虑去重，先针对不同合约不同交易日和不同到期日，实际上，同一天挂牌交易的同一个合约，其逐笔数据的到期交易日都是定的
+        IntervalTempTable1 = OptionContractData[["windcode_op", "StartDate", "exercise_date"]].drop_duplicates()
+        IntervalTempTable2 = OptionContractData[["StartDate", "exercise_date"]].drop_duplicates()
+        IntervalTempTable2["time_to_exercise"] = IntervalTempTable2.apply(
+            OptionMinuteData.TradeDaysCountAnnualizedForApply,
+            axis=1,
+            StartDate="StartDate", EndDate="exercise_date")
+        IntervalTempTable13 = pd.merge(IntervalTempTable1, IntervalTempTable2, on=["StartDate", "exercise_date"],
+                                       how="left")
+        OptionContractData = pd.merge(OptionContractData, IntervalTempTable13,
+                                      on=["windcode_op", "StartDate", "exercise_date"], how="left")
+
         OptionContractData["InterestRate"] = InterestRate
         OptionContractData["DividendRate"] = DividendRate
         return OptionContractData

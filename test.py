@@ -15,13 +15,23 @@ WindCode = "10002008.SH"
 AA = OptionMinuteData.GetRawDataForListedContract("2019-09-04 08:00:00", EndDateTime)
 BB = OptionMinuteData.GetRawDataForListedContract(StartDateTime, EndDateTime)
 CC = OptionMinuteData.GetRawDataForListedContract("2019-11-04 08:00:00", EndDateTime)
-A = BB
+A = AA
 RawDataForUnderlyingSecurity = OptionMinuteData.GetRawDataForUnderlyingSecurity(StartDateTime, EndDateTime)
 A = pd.merge(A, RawDataForUnderlyingSecurity, left_on="datetime",
              right_on="datetime", how="left", suffixes=("_op", "_etf"))
 A = pd.merge(A, ContractSetData, left_on="windcode_op",
              right_index=True, how="left")
 A['StartDate'] = A["date_op"].map(lambda x: x.strftime('%Y-%m-%d'))
+
+# todo #test:A=OptionContractData
+IntervalTempTable1 = A[["windcode_op", "StartDate", "exercise_date"]].drop_duplicates()
+IntervalTempTable2 = A[["StartDate", "exercise_date"]].drop_duplicates()
+IntervalTempTable2["time_to_exercise"] = IntervalTempTable2.apply(OptionMinuteData.TradeDaysCountAnnualizedForApply,
+                                                                  axis=1,
+                                                                  StartDate="StartDate", EndDate="exercise_date")
+IntervalTempTable13 = pd.merge(IntervalTempTable1, IntervalTempTable2, on=["StartDate", "exercise_date"], how="left")
+A= pd.merge(A, IntervalTempTable13, on=["windcode_op", "StartDate", "exercise_date"], how="left")
+
 # 下一句效率太低
 # A[["windcode_op","StartDate","exercise_date"]].drop_duplicates()
 A["time_to_exercise"] = A.apply(OptionMinuteData.TradeDaysCountAnnualizedForApply, axis=1,
