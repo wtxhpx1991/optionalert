@@ -13,7 +13,6 @@ global UnderlyingSecurity
 global DividendRate
 global InterestRate
 UnderlyingSecurity = "510050.SH"
-
 InterestRate = 0.025
 DividendRate = 0.00
 
@@ -1591,7 +1590,7 @@ class OptionMinuteData(OptionContract, TradeCalendar, OptionGreeksMethod):
         :return:
         '''
 
-        RawDataForListedContract = cls.GetRawDataForGivenContract(WindCode,StartDateTime, EndDateTime)
+        RawDataForListedContract = cls.GetRawDataForGivenContract(WindCode, StartDateTime, EndDateTime)
         RawDataForUnderlyingSecurity = cls.GetRawDataForUnderlyingSecurity(StartDateTime, EndDateTime)
         OptionContractDataTemp = pd.merge(RawDataForListedContract, RawDataForUnderlyingSecurity, left_on="datetime",
                                           right_on="datetime", how="left", suffixes=("_op", "_etf"))
@@ -1699,5 +1698,3 @@ class OptionMinuteData(OptionContract, TradeCalendar, OptionGreeksMethod):
                                                            DividendRate="DividendRate",
                                                            Volatility="ImpliedVolatility")
         return DataSetForCompute
-
-
