@@ -1655,7 +1655,7 @@ class OptionMinuteData(OptionContract, TradeCalendar, OptionGreeksMethod):
     @classmethod
     def ComputeGreeksForListedContract(cls, DataSetForCompute):
         '''
-        给出数据计算greeks，默认计算Delta,Gamma,Vega,Theta,Rho。
+        给出数据计算greeks，默认计算ImpliedVolatility,Delta,Gamma,Vega,Theta,Rho。
         :param DataForCompute: 数据集，pd.DataFrame，字段为wind格式，由GetDataForListedContractAndUnderlyingSecurity生成
         :return:
         '''
@@ -1698,3 +1698,14 @@ class OptionMinuteData(OptionContract, TradeCalendar, OptionGreeksMethod):
                                                            DividendRate="DividendRate",
                                                            Volatility="ImpliedVolatility")
         return DataSetForCompute
+
+class OptionHistoryAlertForMinuteData:
+    '''
+    *期权报警类，包含滚动报警和刷新报警，用于历史数据回测。由于使用的是分钟级数据，报警的刷新频率默认1分钟，不做改动，对于滚动报警还增加窗宽参数。
+    *该类初始化的时候需要填写数据源的起始时间和终止时间StartDateTime/EndDateTime，用于通过OptionMinuteData类的接口获取原始数据及GREEKS数据
+    *刷新报警类关键字:RefreshAlert，滚动报警类关键字:RollAlert
+    *初始化，得到原始数据及GREEKS数据，用于回测报警
+    1-滚动报警类
+    1.1-平价关系偏离RollAlert_OptionParityDeviateForApply
+    1.2-
+    '''
