@@ -1,3 +1,6 @@
+# __author:wtxhpx1991
+
+
 from WindPy import *
 import pandas as pd
 import numpy as np
@@ -131,9 +134,6 @@ class OptionContract:
                 ListedContractOnGivenDate['exercise_price'] == ContractExercisePrice]])
             return TempResult.drop_duplicates().sort_index()  # 去重并排序
 
-
-# aa=OptionContract.GetVerticalContractByGivenDate("10001504.SH",GivenDate)
-# aa1=OptionContract.GetHorizonContractByGivenDate("10001504.SH",GivenDate)
 
 class TradeCalendar:
     '''
@@ -1500,7 +1500,6 @@ class OptionGreeksMethod:
                                     ArrLike[Volatility])
 
 
-# ToDo 数据接口
 class OptionMinuteData(OptionContract, TradeCalendar):
     '''
     分钟级交易数据类，通过wind接口导入分钟级行情数据，并做格式化处理
@@ -1508,7 +1507,6 @@ class OptionMinuteData(OptionContract, TradeCalendar):
     2-获取起始日期至终止日期所有曾挂牌交易过的合约数据
     3-获取起始日期至终止日期标的ETF交易数据
     4-匹配现货标的交易数据
-    5-计算希腊字母包括ImpliedVolatility\Delta\Gamma\Vega\Theta\Rho，其余greeks自行添加
     '''
 
     # OptionContract.ContractSet()[OptionContract.ContractSet()['contract_state'] == "上市"].index
@@ -1544,7 +1542,6 @@ class OptionMinuteData(OptionContract, TradeCalendar):
             OptionContractMinuteData['time'] = OptionContractMinuteData['datetime'].dt.time
         return OptionContractMinuteData
 
-    # Todo 还没写完
     @classmethod
     def GetRawDataForListedContract(cls, StartDateTime, EndDateTime):
         '''
@@ -1568,7 +1565,7 @@ class OptionMinuteData(OptionContract, TradeCalendar):
         :return:
         '''
         UnderlyingSecurityMinuteRawData = w.wsi(UnderlyingSecurity,
-                                                "open,high,low,close,volume,amt,chg,pct_chg,oi",
+                                                "open,high,low,close,volume,amt,chg,pct_chg",
                                                 StartDateTime, EndDateTime, "Fill=Previous;PriceAdj=F")
         UnderlyingSecurityMinuteData = pd.DataFrame(UnderlyingSecurityMinuteRawData.Data).T
         UnderlyingSecurityMinuteData.columns = UnderlyingSecurityMinuteRawData.Fields
@@ -1590,3 +1587,4 @@ class OptionMinuteData(OptionContract, TradeCalendar):
         RawDataForUnderlyingSecurity = cls.GetRawDataForUnderlyingSecurity(StartDateTime, EndDateTime)
         OptionContractData = pd.merge(RawDataForListedContract, RawDataForUnderlyingSecurity, left_on="datetime",
                                       right_on="datetime", how="left", suffixes=("_op", "_etf"))
+        return OptionContractData
