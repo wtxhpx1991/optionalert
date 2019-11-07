@@ -10,7 +10,12 @@ import datetime as dt
 w.start()
 global ContractSetData
 global UnderlyingSecurity
+global DividendRate
+global InterestRate
 UnderlyingSecurity = "510050.SH"
+
+InterestRate = 0.025
+DividendRate = 0.00
 
 
 def ContractSet(exchange="sse", windcode=UnderlyingSecurity, status="all"):
@@ -24,7 +29,7 @@ def ContractSet(exchange="sse", windcode=UnderlyingSecurity, status="all"):
     OptionContractNameData = pd.DataFrame(OptionContractNameRawData.Data).T
     OptionContractNameData.columns = OptionContractNameRawData.Fields
     OptionContractNameData.index = OptionContractNameData['wind_code'].map(lambda x: str(x) + ExchangeLabel)
-
+    OptionContractNameData['wind_code'] = OptionContractNameData['wind_code'].map(lambda x: str(x) + ExchangeLabel)
     return OptionContractNameData
 
 
@@ -1500,13 +1505,14 @@ class OptionGreeksMethod:
                                     ArrLike[Volatility])
 
 
-class OptionMinuteData(OptionContract, TradeCalendar):
+class OptionMinuteData(OptionContract, TradeCalendar, OptionGreeksMethod):
     '''
     分钟级交易数据类，通过wind接口导入分钟级行情数据，并做格式化处理
     1-获取起始日期至终止日期指定合约数据
     2-获取起始日期至终止日期所有曾挂牌交易过的合约数据
     3-获取起始日期至终止日期标的ETF交易数据
     4-匹配现货标的交易数据
+    5-计算greeks，默认计算Delta,Gamma,Vega,Theta,Rho。其余的Vomma,Vanna,Charm,Veta自行修改代码既可。
     '''
 
     # OptionContract.ContractSet()[OptionContract.ContractSet()['contract_state'] == "上市"].index
@@ -1585,6 +1591,30 @@ class OptionMinuteData(OptionContract, TradeCalendar):
         '''
         RawDataForListedContract = cls.GetRawDataForListedContract(StartDateTime, EndDateTime)
         RawDataForUnderlyingSecurity = cls.GetRawDataForUnderlyingSecurity(StartDateTime, EndDateTime)
-        OptionContractData = pd.merge(RawDataForListedContract, RawDataForUnderlyingSecurity, left_on="datetime",
-                                      right_on="datetime", how="left", suffixes=("_op", "_etf"))
+        OptionContractDataTemp = pd.merge(RawDataForListedContract, RawDataForUnderlyingSecurity, left_on="datetime",
+                                          right_on="datetime", how="left", suffixes=("_op", "_etf"))
+        OptionContractData = pd.merge(OptionContractDataTemp, ContractSetData, left_on="windcode_op",
+                                      right_index=True, how="left")
+        # todo 修改
+        OptionContractData['StartDate'] = OptionContractData["date_op"].map(lambda x: x.strftime('%Y-%m-%d'))
+        OptionContractData["time_to_exercise"] = OptionContractData.apply(cls.TradeDaysCountAnnualizedForApply, axis=1,
+                                                                          StartDate="StartDate", EndDate="exercise_date")
+        OptionContractData["InterestRate"] = InterestRate
+        OptionContractData["DividendRate"] = DividendRate
         return OptionContractData
+
+    @classmethod
+    def ComputeGreeksForListedContract(cls, DataSetForCompute):
+        '''
+        给出数据计算greeks，默认计算Delta,Gamma,Vega,Theta,Rho。
+        :param DataForCompute: 数据集，pd.DataFrame，字段为wind格式，由GetDataForListedContractAndUnderlyingSecurity生成
+        :return:
+        '''
+        DataSetForCompute["ImpliedVolatility"] = DataSetForCompute.apply(cls.ImpliedVolatilityForApply, axis=1,
+                                                                         Direction="call_or_put",
+                                                                         UnderlyingPrice="close_etf",
+                                                                         ExercisePrice="exercise_price",
+                                                                         Time="time_to_exercise",
+                                                                         InterestRate="InterestRate",
+                                                                         DividendRate="DividendRate",
+                                                                         Target="close_op")
