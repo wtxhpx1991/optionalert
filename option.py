@@ -1735,8 +1735,7 @@ class OptionHistoryAlertForMinuteData:
         'wind_code', 'trade_code', 'sec_name',
         'call_or_put', 'listed_date',
         'expire_date', 'exercise_date', 'settlement_date', 'reference_price',
-        'StartDate', 'time_to_exercise',
-        'InterestRate', 'DividendRate', 'ImpliedVolatility', 'Delta', 'Gamma',
+        'StartDate',  'ImpliedVolatility', 'Delta', 'Gamma',
         'Vega', 'Theta', 'Rho'
         认购期权和认沽期权相同的字段：
         'windcode_etf', 'open_etf', 'high_etf', 'low_etf',
@@ -1750,7 +1749,8 @@ class OptionHistoryAlertForMinuteData:
             columns=['windcode_etf', 'open_etf', 'high_etf', 'low_etf',
                      'close_etf', 'volume_etf', 'amount_etf', 'change_etf', 'pctchange_etf',
                      'date_etf', 'time_etf', 'option_mark_code', 'option_type', 'exercise_mode', 'contract_unit',
-                     'settle_mode', 'contract_state'])
+                     'settle_mode', 'contract_state', 'time_to_exercise',
+                     'InterestRate', 'DividendRate'])
         result = pd.merge(TempCallResult, TempPutResult, how="left", on=["datetime", "limit_month", "exercise_price"],
                           suffixes=("_call", "_put"))
         return result
@@ -1761,11 +1761,16 @@ class OptionHistoryAlertForMinuteData:
         :return:返回正向平价比、反向平价比、多空隐含波动率比
         '''
         TempResult = self.FormatDataToParityCompute()
-        TempResult["Forward_Parity_Ratio"]
-        TempResult["Backward_Parity_Ratio"]
+        TempResult["Forward_Parity_Ratio"] = (TempResult["close_op_call"] + TempResult["exercise_price"] * (
+                TempResult["time_to_exercise"] * TempResult["InterestRate"]).apply(lambda x: np.exp(-x))) / (
+                                                     TempResult["close_op_put"] + TempResult["close_etf"])
+        TempResult["Backward_Parity_Ratio"] = (TempResult["close_op_put"] + TempResult["close_etf"]) / (
+                TempResult["close_op_call"] + TempResult["exercise_price"] * (
+                TempResult["time_to_exercise"] * TempResult[
+            "InterestRate"]).apply(lambda x: np.exp(-x)))
         TempResult["Call_Put_ImpliedVolatility_Ratio"] = TempResult["ImpliedVolatility_call"] / TempResult[
             "ImpliedVolatility_put"]
-        pass
+        return TempResult
 
     @classmethod
     def RollAlert_OptionParityDeviate_Result(cls, ArrLike, Arg1=0.1, Arg2=0.1, Arg3=0.2):
