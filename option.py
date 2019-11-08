@@ -1726,6 +1726,7 @@ class OptionHistoryAlertForMinuteData:
         self.ListedContractDataWithGreeks = OptionMinuteData.ComputeGreeksForListedContract(self.ListedContractData)
 
     # todo 把数据格式处理成方便计算平价关系
+    # pass
     @classmethod
     def RollAlert_OptionParityDeviate_RawData(cls):
         '''
