@@ -1699,6 +1699,7 @@ class OptionMinuteData(OptionContract, TradeCalendar, OptionGreeksMethod):
                                                            Volatility="ImpliedVolatility")
         return DataSetForCompute
 
+
 class OptionHistoryAlertForMinuteData:
     '''
     *期权报警类，包含滚动报警和刷新报警，用于历史数据回测。由于使用的是分钟级数据，报警的刷新频率默认1分钟，不做改动，对于滚动报警还增加窗宽参数。
@@ -1706,6 +1707,45 @@ class OptionHistoryAlertForMinuteData:
     *刷新报警类关键字:RefreshAlert，滚动报警类关键字:RollAlert
     *初始化，得到原始数据及GREEKS数据，用于回测报警
     1-滚动报警类
-    1.1-平价关系偏离RollAlert_OptionParityDeviateForApply
+    1.1-平价关系偏离RollAlert_OptionParityDeviate
+    1.1.1-平价关系偏离原始数据RollAlert_OptionParityDeviate_RawData
+    1.1.2-平价关系偏离测算结果RollAlert_OptionParityDeviate_Result
     1.2-
     '''
+
+    def __init__(self, StartDateTime, EndDateTime):
+        '''
+        初始化类，得到合约交易数据和测算数据（含有希腊字母的）
+        :param StartDateTime:"%Y-%m-%d %H:%M:%S"
+        :param EndDateTime: "%Y-%m-%d %H:%M:%S"
+        '''
+        self.StartTime = StartDateTime
+        self.EndTime = EndDateTime
+        self.ListedContractData = OptionMinuteData.GetDataForListedContractAndUnderlyingSecurity(self.StartTime,
+                                                                                                 self.EndTime)
+        self.ListedContractDataWithGreeks = OptionMinuteData.ComputeGreeksForListedContract(self.ListedContractData)
+
+    # todo 把数据格式处理成方便计算平价关系
+    @classmethod
+    def RollAlert_OptionParityDeviate_RawData(cls):
+        '''
+        计算平价关系偏离报警的原始数据，包括正向平价比、反向平价比、多空隐含波动率比三个值
+        :return:
+        '''
+        # TempResult=cls().ListedContractDataWithGreeks[]
+        pass
+
+    @classmethod
+    def RollAlert_OptionParityDeviate_Result(cls, ArrLike, Arg1=0.1, Arg2=0.1, Arg3=0.2):
+        '''
+        1.1-平价关系偏离RollAlert_OptionParityDeviate，包含三个参数，正向平价比、反向平价比、多空隐含波动率比
+        :param ArrLike: pd.DataFrame
+        :param Arg1:
+        :param Arg2:
+        :param Arg3:
+        :param BandWidth:
+        :return:
+        '''
+        pass
+
+# todo 期权报警测算类，基于不同的参数阈值回测进行敏感性分析
