@@ -390,8 +390,8 @@ class OptionGreeksMethod:
         :param Target:
         :return:
         '''
-        HIGH = 5
-        LOW = 0
+        HIGH = 2
+        LOW = 0.00001
         while (HIGH - LOW) > 0.0001:
             if cls.EuropeanCallPrice(UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
                                      (HIGH + LOW) / 2) > Target:
@@ -414,8 +414,8 @@ class OptionGreeksMethod:
         :param Target:
         :return:
         '''
-        HIGH = 5
-        LOW = 0
+        HIGH = 2
+        LOW = 0.00001
         while (HIGH - LOW) > 0.0001:
             if cls.EuropeanCallPrice(ArrLike[UnderlyingPrice], ArrLike[ExercisePrice], ArrLike[Time],
                                      ArrLike[InterestRate], ArrLike[DividendRate],
@@ -437,8 +437,8 @@ class OptionGreeksMethod:
         :param Target:
         :return:
         '''
-        HIGH = 5
-        LOW = 0
+        HIGH = 2
+        LOW = 0.00001
         while (HIGH - LOW) > 0.0001:
             if cls.EuropeanPutPrice(UnderlyingPrice, ExercisePrice, Time, InterestRate, DividendRate,
                                     (HIGH + LOW) / 2) > Target:
@@ -460,8 +460,8 @@ class OptionGreeksMethod:
         :param Target:
         :return:
         '''
-        HIGH = 5
-        LOW = 0
+        HIGH = 2
+        LOW = 0.00001
         while (HIGH - LOW) > 0.0001:
             if cls.EuropeanPutPrice(ArrLike[UnderlyingPrice], ArrLike[ExercisePrice], ArrLike[Time],
                                     ArrLike[InterestRate], ArrLike[DividendRate],
@@ -1726,14 +1726,45 @@ class OptionHistoryAlertForMinuteData:
         self.ListedContractDataWithGreeks = OptionMinuteData.ComputeGreeksForListedContract(self.ListedContractData)
 
     # todo 把数据格式处理成方便计算平价关系
-    # pass
-    @classmethod
-    def RollAlert_OptionParityDeviate_RawData(cls):
+    def FormatDataToParityCompute(self):
         '''
-        计算平价关系偏离报警的原始数据，包括正向平价比、反向平价比、多空隐含波动率比三个值
+        关键字段，limit_month,exercise_price,datetime是主键
+        认购期权和认沽期权不同的字段:
+        'windcode_op', 'open_op', 'high_op', 'low_op', 'close_op', 'volume_op',
+        'amount_op', 'change_op', 'pctchange_op', 'position','date_op', 'time_op',
+        'wind_code', 'trade_code', 'sec_name',
+        'call_or_put', 'listed_date',
+        'expire_date', 'exercise_date', 'settlement_date', 'reference_price',
+        'StartDate', 'time_to_exercise',
+        'InterestRate', 'DividendRate', 'ImpliedVolatility', 'Delta', 'Gamma',
+        'Vega', 'Theta', 'Rho'
+        认购期权和认沽期权相同的字段：
+        'windcode_etf', 'open_etf', 'high_etf', 'low_etf',
+        'close_etf', 'volume_etf', 'amount_etf', 'change_etf', 'pctchange_etf',
+        'date_etf', 'time_etf'
         :return:
         '''
-        # TempResult=cls().ListedContractDataWithGreeks[]
+        TempResult = self.ListedContractDataWithGreeks
+        TempCallResult = TempResult[TempResult["call_or_put"] == "认购"]
+        TempPutResult = TempResult[TempResult["call_or_put"] == "认沽"].drop(
+            columns=['windcode_etf', 'open_etf', 'high_etf', 'low_etf',
+                     'close_etf', 'volume_etf', 'amount_etf', 'change_etf', 'pctchange_etf',
+                     'date_etf', 'time_etf', 'option_mark_code', 'option_type', 'exercise_mode', 'contract_unit',
+                     'settle_mode', 'contract_state'])
+        result = pd.merge(TempCallResult, TempPutResult, how="left", on=["datetime", "limit_month", "exercise_price"],
+                          suffixes=("_call", "_put"))
+        return result
+
+    def RollAlert_OptionParityDeviate_RawData(self):
+        '''
+        计算平价关系偏离报警的原始数据，包括正向平价比、反向平价比、多空隐含波动率比三个值
+        :return:返回正向平价比、反向平价比、多空隐含波动率比
+        '''
+        TempResult = self.FormatDataToParityCompute()
+        TempResult["Forward_Parity_Ratio"]
+        TempResult["Backward_Parity_Ratio"]
+        TempResult["Call_Put_ImpliedVolatility_Ratio"] = TempResult["ImpliedVolatility_call"] / TempResult[
+            "ImpliedVolatility_put"]
         pass
 
     @classmethod
