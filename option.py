@@ -1710,7 +1710,9 @@ class OptionHistoryAlertForMinuteData:
     1.1-平价关系偏离RollAlert_OptionParityDeviate
     1.1.1-平价关系偏离原始数据RollAlert_OptionParityDeviate_RawData
     1.1.2-平价关系偏离测算结果RollAlert_OptionParityDeviate_Result
-    1.2-
+    1.2-隐含波动率瞬间偏离RollAlert_ImpliedVolatilityDeviate
+    1.2.1-隐含波动率瞬间偏离原始数据RollAlert_ImpliedVolatilityDeviate_RawData
+    1.2.2-隐含波动率瞬间偏离测算结果RollAlert_ImpliedVolatilityDeviate_Result
     '''
 
     def __init__(self, StartDateTime, EndDateTime):
@@ -1782,15 +1784,33 @@ class OptionHistoryAlertForMinuteData:
                                              Arg2="Backward_Parity_Ratio", Arg3="Call_Put_ImpliedVolatility_Ratio"):
         '''
         1.1.2-平价关系偏离测算结果RollAlert_OptionParityDeviate_Result
-        :param ArrLike: pd.DataFrame
-        :param Arg1:正向平价比
-        :param Arg2:反向平价比
-        :param Arg3:多空隐含波动率比
+        :param ArrLike:
+        :param Arg1_Value:
+        :param Arg2_Value:
+        :param Arg3_Value:
+        :param Arg1:
+        :param Arg2:
+        :param Arg3:
         :return:
         '''
         TempResult = ArrLike[
             (ArrLike[Arg1] >= Arg1_Value) | (ArrLike[Arg2] >= Arg2_Value) | (ArrLike[Arg3] >= Arg3_Value)]
         return TempResult[
             (TempResult["ImpliedVolatility_call"] >= 0.0001) & (TempResult["ImpliedVolatility_put"] >= 0.0001)]
+
+    def RollAlert_ImpliedVolatilityDeviate_RawData(self, bandwith):
+        '''
+        1.2.1-隐含波动率瞬间偏离原始数据RollAlert_ImpliedVolatilityDeviate_RawData
+        :param bandwith: 滚动区间，默认3min
+        :return:
+        '''
+        result = self.ListedContractDataWithGreeks
+        return result
+        # AA = DD.groupby(["windcode_op", "date_op"])["time_op", "ImpliedVolatility"]
+        # AA.rolling(3, on="time_op").max()
+
+    aaa1 = DD.groupby(["windcode_op", "date_op"])["time_op", "ImpliedVolatility"]
+    ccc1 = aaa1.rolling(3, on="time_op").max()
+    DD.groupby(["windcode_op", "date_op"])["time_op", "ImpliedVolatility"].apply(pd.rolling_max,3)
 
 # todo 期权报警测算类，基于不同的参数阈值回测进行敏感性分析
