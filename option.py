@@ -1757,32 +1757,40 @@ class OptionHistoryAlertForMinuteData:
 
     def RollAlert_OptionParityDeviate_RawData(self):
         '''
+        1.1.1-平价关系偏离原始数据RollAlert_OptionParityDeviate_RawData
         计算平价关系偏离报警的原始数据，包括正向平价比、反向平价比、多空隐含波动率比三个值
         :return:返回正向平价比、反向平价比、多空隐含波动率比
         '''
         TempResult = self.FormatDataToParityCompute()
         TempResult["Forward_Parity_Ratio"] = (TempResult["close_op_call"] + TempResult["exercise_price"] * (
                 TempResult["time_to_exercise"] * TempResult["InterestRate"]).apply(lambda x: np.exp(-x))) / (
-                                                     TempResult["close_op_put"] + TempResult["close_etf"])
+                                                     TempResult["close_op_put"] + TempResult["close_etf"]) - 1
         TempResult["Backward_Parity_Ratio"] = (TempResult["close_op_put"] + TempResult["close_etf"]) / (
                 TempResult["close_op_call"] + TempResult["exercise_price"] * (
                 TempResult["time_to_exercise"] * TempResult[
-            "InterestRate"]).apply(lambda x: np.exp(-x)))
+            "InterestRate"]).apply(lambda x: np.exp(-x))) - 1
         TempResult["Call_Put_ImpliedVolatility_Ratio"] = TempResult["ImpliedVolatility_call"] / TempResult[
-            "ImpliedVolatility_put"]
+            "ImpliedVolatility_put"] - 1
         return TempResult
 
+    # CC = OptionHistoryAlertForMinuteData(StartDateTime, EndDateTime)
+    # DD = CC.RollAlert_OptionParityDeviate_RawData()
+    # DD_result = CC.RollAlert_OptionParityDeviate_Result(DD, 0.1, 0.1, 0.2)
     @classmethod
-    def RollAlert_OptionParityDeviate_Result(cls, ArrLike, Arg1=0.1, Arg2=0.1, Arg3=0.2):
+    def RollAlert_OptionParityDeviate_Result(cls, ArrLike, Arg1_Value, Arg2_Value, Arg3_Value,
+                                             Arg1="Forward_Parity_Ratio",
+                                             Arg2="Backward_Parity_Ratio", Arg3="Call_Put_ImpliedVolatility_Ratio"):
         '''
-        1.1-平价关系偏离RollAlert_OptionParityDeviate，包含三个参数，正向平价比、反向平价比、多空隐含波动率比
+        1.1.2-平价关系偏离测算结果RollAlert_OptionParityDeviate_Result
         :param ArrLike: pd.DataFrame
-        :param Arg1:
-        :param Arg2:
-        :param Arg3:
-        :param BandWidth:
+        :param Arg1:正向平价比
+        :param Arg2:反向平价比
+        :param Arg3:多空隐含波动率比
         :return:
         '''
-        pass
+        TempResult = ArrLike[
+            (ArrLike[Arg1] >= Arg1_Value) | (ArrLike[Arg2] >= Arg2_Value) | (ArrLike[Arg3] >= Arg3_Value)]
+        return TempResult[
+            (TempResult["ImpliedVolatility_call"] >= 0.0001) & (TempResult["ImpliedVolatility_put"] >= 0.0001)]
 
 # todo 期权报警测算类，基于不同的参数阈值回测进行敏感性分析

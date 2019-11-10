@@ -18,6 +18,9 @@ TEST1_GREEKS = option.OptionMinuteData.ComputeGreeksForListedContract(TEST1)
 TEST2 = option.OptionMinuteData.GetDataForListedContractAndUnderlyingSecurity(StartDateTime, EndDateTime)
 TEST2_GREEKS = option.OptionMinuteData.ComputeGreeksForListedContract(TEST2)
 
+AA=option.GetDataForListedContractAndUnderlyingSecurity(StartDateTime,EndDateTime)
+BB=option.OptionMinuteData.ComputeGreeksForListedContract(AA)
+
 if __name__ == "__main__":
     option.OptionGreeksMethod.EuropeanCallPrice(3.05, 3, 0.1234, 0.025, 0, 0.2)
     option.OptionGreeksMethod.EuropeanPutPrice(3.05, 3, 0.1234, 0.025, 0, 0.2)
