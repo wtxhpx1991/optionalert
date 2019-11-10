@@ -12,7 +12,7 @@ EndDateTime = "2019-11-08 18:00:00"
 StartDate = "2019-10-31"
 EndDate = "2019-11-04"
 WindCode = "10002008.SH"
-GivenDateTime="2019-11-08 15:00:00"
+GivenDateTime="2019-10-31 14:00:00"
 
 TEST1 = option.OptionMinuteData.GetDataForGivenContractAndUnderlyingSecurity("10001827.SH", StartDateTime, EndDateTime)
 TEST1_GREEKS = option.OptionMinuteData.ComputeGreeksForListedContract(TEST1)

@@ -1913,7 +1913,8 @@ class OptionPlot:
     1-隐含波动率曲面
     '''
 
-    def ImpliedVolatilitySurfacePlot(self, GivenDateTime, Direction="认购"):
+    @staticmethod
+    def ImpliedVolatilitySurfacePlot(GivenDateTime, Direction="认购"):
         '''
         画给定时刻50ETF隐含波动率曲面
         :param GivenDateTime:'%Y-%m-%d %H:%M:%S'
@@ -1963,9 +1964,11 @@ class OptionPlot:
 
         fig.colorbar(surf, shrink=0.5, aspect=5)
 
-    def ImpliedVolatilitySurfacePlot_dropzero(self, GivenDateTime, Direction="认购"):
+    @staticmethod
+    def ImpliedVolatilitySurfacePlot_dropzero(GivenDateTime, Direction="认购"):
         '''
-        画给定时刻50ETF隐含波动率曲面
+        画给定时刻50ETF隐含波动率曲面，剔除隐含波动率等于0的相关执行价格的合约
+        # OptionPlot().ImpliedVolatilitySurfacePlot_dropzero(GivenDateTime)
         :param GivenDateTime:'%Y-%m-%d %H:%M:%S'
         :return:隐含波动率曲面
         '''
@@ -2017,5 +2020,63 @@ class OptionPlot:
         plt.yticks(list(range(len(OptionDataForPlot_LimitMonth))), list(OptionDataForPlot_LimitMonth.values))
 
         fig.colorbar(surf, shrink=0.5, aspect=5)
+    @staticmethod
+    def ImpliedVolatilitySurfacePlot_dropzero_limitmonth(GivenDateTime, Direction="认购"):
+        '''
+        画给定时刻50ETF隐含波动率曲面，剔除隐含波动率等于0的相关执行价格的合约以及同一执行价格不够4个的合约。
+        :param GivenDateTime:'%Y-%m-%d %H:%M:%S'
+        :return:隐含波动率曲面
+        '''
+        StartDateTime = GivenDateTime
+        EndDateTime = dt.datetime.strptime(GivenDateTime, '%Y-%m-%d %H:%M:%S') + dt.timedelta(seconds=1)
+        EndDateTime = EndDateTime.strftime('%Y-%m-%d %H:%M:%S')
+        OptionRawData = OptionMinuteData.GetDataForListedContractAndUnderlyingSecurity(StartDateTime, EndDateTime)
+        OptionRawData = OptionMinuteData.ComputeGreeksForListedContract(OptionRawData)
+        OptionDataForPlot = OptionRawData[OptionRawData["call_or_put"] == Direction]
+        OptionDataForPlot_LimitMonth = OptionDataForPlot["limit_month"].drop_duplicates().sort_values()
 
-# OptionDataForPlot.groupby("exercise_price")["ImpliedVolatility"].min()>0.001
+        # 剔除隐含波动率为0的价格
+        temp = (OptionDataForPlot.groupby("exercise_price")["ImpliedVolatility"].min() > 0.001) & (
+                OptionDataForPlot.groupby("exercise_price")["ImpliedVolatility"].count() == 4)
+        temp = temp.reset_index()
+        tempresult = temp[temp["ImpliedVolatility"] == True]
+        OptionDataForPlot_ExercisePrice = tempresult["exercise_price"].drop_duplicates().sort_values()
+        # 画隐含波动率曲面
+        # 画出rsi与pct的相关系数曲面
+        OptionDataForPlot_LimitMonth_Range = np.arange(len(OptionDataForPlot_LimitMonth))
+        OptionDataForPlo_ExercisePrice_Range = np.arange(len(OptionDataForPlot_ExercisePrice))
+        ImpliedVolatilitySurfacePlot_Array = np.empty(
+            [len(OptionDataForPlot_ExercisePrice), len(OptionDataForPlot_LimitMonth)])
+        OptionDataForPlot_LimitMonth_Range, OptionDataForPlo_ExercisePrice_Range = np.meshgrid(
+            OptionDataForPlot_LimitMonth_Range, OptionDataForPlo_ExercisePrice_Range)
+        for i in range(len(OptionDataForPlot_ExercisePrice)):
+            for j in range(len(OptionDataForPlot_LimitMonth)):
+                temp = OptionDataForPlot[
+                    (OptionDataForPlot["limit_month"] == OptionDataForPlot_LimitMonth.iloc[j]) & (
+                            OptionDataForPlot["exercise_price"] == OptionDataForPlot_ExercisePrice.iloc[i])]
+                if not len(temp.index == 0):
+                    ImpliedVolatilitySurfacePlot_Array[i, j] = 0
+                else:
+                    ImpliedVolatilitySurfacePlot_Array[i, j] = temp["ImpliedVolatility"].values[0]
+
+        fig = plt.figure(figsize=(15, 12))
+        ax = fig.gca(projection='3d')
+        surf = ax.plot_surface(OptionDataForPlo_ExercisePrice_Range, OptionDataForPlot_LimitMonth_Range,
+                               ImpliedVolatilitySurfacePlot_Array,
+                               rstride=2, cstride=2, cmap=plt.cm.coolwarm,
+                               linewidth=0.5, antialiased=True)
+        ax.set_xlabel('ExercisePrice')
+        ax.set_ylabel('limit_month')
+        ax.set_zlabel('ImpliedVolatility')
+        ax.set_title('ImpliedVolatility Surface at {}'.format(GivenDateTime))
+        # ax.set_yticks([0, 1, 2, 3], list(OptionDataForPlot_LimitMonth.values))
+        plt.ylim([0, 3])
+        plt.xticks(list(range(len(OptionDataForPlo_ExercisePrice_Range))),
+                   list(OptionDataForPlot_ExercisePrice.values))
+        plt.yticks(list(range(len(OptionDataForPlot_LimitMonth))), list(OptionDataForPlot_LimitMonth.values))
+
+        fig.colorbar(surf, shrink=0.5, aspect=5)
+
+# (OptionDataForPlot.groupby("exercise_price")["ImpliedVolatility"].min()>0.001)
+# (OptionDataForPlot.groupby("exercise_price")["ImpliedVolatility"].count()<4)
+
