@@ -1929,7 +1929,6 @@ class OptionPlot:
         OptionDataForPlot_LimitMonth = OptionDataForPlot["limit_month"].drop_duplicates().sort_values()
         OptionDataForPlot_ExercisePrice = OptionDataForPlot["exercise_price"].drop_duplicates().sort_values()
         # 画隐含波动率曲面
-        # 画出rsi与pct的相关系数曲面
         OptionDataForPlot_LimitMonth_Range = np.arange(len(OptionDataForPlot_LimitMonth))
         OptionDataForPlo_ExercisePrice_Range = np.arange(len(OptionDataForPlot_ExercisePrice))
         ImpliedVolatilitySurfacePlot_Array = np.empty(
@@ -1986,7 +1985,6 @@ class OptionPlot:
         tempresult = temp[temp["ImpliedVolatility"] == True]
         OptionDataForPlot_ExercisePrice = tempresult["exercise_price"].drop_duplicates().sort_values()
         # 画隐含波动率曲面
-        # 画出rsi与pct的相关系数曲面
         OptionDataForPlot_LimitMonth_Range = np.arange(len(OptionDataForPlot_LimitMonth))
         OptionDataForPlo_ExercisePrice_Range = np.arange(len(OptionDataForPlot_ExercisePrice))
         ImpliedVolatilitySurfacePlot_Array = np.empty(
@@ -2042,7 +2040,6 @@ class OptionPlot:
         tempresult = temp[temp["ImpliedVolatility"] == True]
         OptionDataForPlot_ExercisePrice = tempresult["exercise_price"].drop_duplicates().sort_values()
         # 画隐含波动率曲面
-        # 画出rsi与pct的相关系数曲面
         OptionDataForPlot_LimitMonth_Range = np.arange(len(OptionDataForPlot_LimitMonth))
         OptionDataForPlo_ExercisePrice_Range = np.arange(len(OptionDataForPlot_ExercisePrice))
         ImpliedVolatilitySurfacePlot_Array = np.empty(
