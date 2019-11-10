@@ -1779,38 +1779,64 @@ class OptionHistoryAlertForMinuteData:
     # DD = CC.RollAlert_OptionParityDeviate_RawData()
     # DD_result = CC.RollAlert_OptionParityDeviate_Result(DD, 0.1, 0.1, 0.2)
     @classmethod
-    def RollAlert_OptionParityDeviate_Result(cls, ArrLike, Arg1_Value, Arg2_Value, Arg3_Value,
-                                             Arg1="Forward_Parity_Ratio",
-                                             Arg2="Backward_Parity_Ratio", Arg3="Call_Put_ImpliedVolatility_Ratio"):
+    def RollAlert_OptionParityDeviate_Result(cls, ArrLike, Arg1_Value, Arg2_Value, Arg3_Value):
         '''
         1.1.2-平价关系偏离测算结果RollAlert_OptionParityDeviate_Result
         :param ArrLike:
         :param Arg1_Value:
         :param Arg2_Value:
         :param Arg3_Value:
-        :param Arg1:
-        :param Arg2:
-        :param Arg3:
         :return:
         '''
         TempResult = ArrLike[
-            (ArrLike[Arg1] >= Arg1_Value) | (ArrLike[Arg2] >= Arg2_Value) | (ArrLike[Arg3] >= Arg3_Value)]
+            (ArrLike["Forward_Parity_Ratio"] >= Arg1_Value) | (ArrLike["Backward_Parity_Ratio"] >= Arg2_Value) | (
+                    ArrLike["Call_Put_ImpliedVolatility_Ratio"] >= Arg3_Value)]
         return TempResult[
             (TempResult["ImpliedVolatility_call"] >= 0.0001) & (TempResult["ImpliedVolatility_put"] >= 0.0001)]
 
-    def RollAlert_ImpliedVolatilityDeviate_RawData(self, bandwith):
+    def RollAlert_ImpliedVolatilityDeviate_RawData(self, bandwith=3):
         '''
         1.2.1-隐含波动率瞬间偏离原始数据RollAlert_ImpliedVolatilityDeviate_RawData
         :param bandwith: 滚动区间，默认3min
         :return:
         '''
         result = self.ListedContractDataWithGreeks
+        result["date_op_str"] = result["date_op"].apply(lambda x: x.strftime('%Y-%m-%d'))
+        result["time_op_str"] = result["time_op"].apply(lambda x: x.strftime('%H:%M:%S'))
+        # 计算rolling最大值
+        result_groupby = result.groupby(["windcode_op", "date_op_str"])["time_op_str", "ImpliedVolatility"]
+        result_groupby_max = result_groupby.rolling(bandwith, on="time_op_str").max()
+        result_groupby_max = result_groupby_max.reset_index()
+        result_groupby_max = result_groupby_max.drop(columns=["level_2"])
+        result_groupby_max.rename(columns={"ImpliedVolatility": "ImpliedVolatility_Rolling_Max"}, inplace=True)
+        result = pd.merge(result, result_groupby_max, how="left", on=["windcode_op", "date_op_str", "time_op_str"])
+        # 计算rolling最小值
+        result_groupby_min = result_groupby.rolling(bandwith, on="time_op_str").min()
+        result_groupby_min = result_groupby_min.reset_index()
+        result_groupby_min = result_groupby_min.drop(columns=["level_2"])
+        result_groupby_min.rename(columns={"ImpliedVolatility": "ImpliedVolatility_Rolling_Min"}, inplace=True)
+        result = pd.merge(result, result_groupby_min, how="left", on=["windcode_op", "date_op_str", "time_op_str"])
+        result["ImpliedVolatility_Rolling_Max"] = result["ImpliedVolatility_Rolling_Max"].fillna(-9999)
+        result["ImpliedVolatility_Rolling_Min"] = result["ImpliedVolatility_Rolling_Min"].fillna(-9999)
+        result["ImpliedVolatilityDeviateRatio"] = result["ImpliedVolatility_Rolling_Max"] / result[
+            "ImpliedVolatility_Rolling_Min"] - 1
+        result["ImpliedVolatilityDeviateRatio"] = result["ImpliedVolatilityDeviateRatio"].apply(lambda x: abs(x))
         return result
-        # AA = DD.groupby(["windcode_op", "date_op"])["time_op", "ImpliedVolatility"]
-        # AA.rolling(3, on="time_op").max()
 
-    aaa1 = DD.groupby(["windcode_op", "date_op"])["time_op", "ImpliedVolatility"]
-    ccc1 = aaa1.rolling(3, on="time_op").max()
-    DD.groupby(["windcode_op", "date_op"])["time_op", "ImpliedVolatility"].apply(pd.rolling_max,3)
+    # CC = OptionHistoryAlertForMinuteData(StartDateTime, EndDateTime)
+    # DD = CC.RollAlert_ImpliedVolatilityDeviate_RawData(bandwith=3)
+    # DD_result = CC.RollAlert_ImpliedVolatilityDeviate_Result(DD, 0.2)
+    @classmethod
+    def RollAlert_ImpliedVolatilityDeviate_Result(cls, ArrLike, Arg1_Value):
+        '''
+        1.2.2-隐含波动率瞬间偏离测算结果RollAlert_ImpliedVolatilityDeviate_Result
+        :param ArrLike:
+        :param Arg1_Value:
+        :return:
+        '''
+        TempResult = ArrLike[ArrLike["ImpliedVolatilityDeviateRatio"] >= Arg1_Value]
+        return TempResult[
+            (TempResult["ImpliedVolatility_Rolling_Max"] >= 0.0001) & (
+                        TempResult["ImpliedVolatility_Rolling_Min"] >= 0.0001)]
 
 # todo 期权报警测算类，基于不同的参数阈值回测进行敏感性分析
