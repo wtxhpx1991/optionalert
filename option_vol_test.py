@@ -3,7 +3,6 @@
 
 import option
 import pandas as pd
-import datetime.datetime as dt
 from WindPy import *
 
 w.start()
@@ -45,5 +44,8 @@ OptionContractSetTemp = OptionContractSetTemp.reset_index(drop=True)
 OptionContractData = pd.merge(OptionContractData, OptionContractSetTemp, on="wind_code", how="left")
 # 计算到期日
 OptionContractData['datetimef'] = OptionContractData['datetime'].map(lambda x: x.strftime('%Y-%m-%d'))
-OptionContractData.apply(option.TradeCalendar.TradeDaysCountAnnualizedForApply, axis=1, StartDate="datetimef",
-                         EndDate="exercise_date")
+OptionContractData["time"] = OptionContractData.apply(option.TradeCalendar.TradeDaysCountAnnualizedForApply, axis=1,
+                                                      StartDate="datetimef",
+                                                      EndDate="exercise_date")
+OptionContractData["time"] = OptionContractData["time"] + 1 / 252
+
