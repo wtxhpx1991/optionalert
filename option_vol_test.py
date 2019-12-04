@@ -5,6 +5,8 @@ import option
 import pandas as pd
 from WindPy import *
 
+InterestRate = 0.025
+DividendRate = 0.00
 w.start()
 
 START_DATE = "2019-01-01"
@@ -42,10 +44,31 @@ OptionContractData = pd.merge(OptionContractDatavol, OptionContractDataClose, on
 OptionContractSetTemp = OptionContractSet[['wind_code', 'call_or_put', 'exercise_price', 'exercise_date']]
 OptionContractSetTemp = OptionContractSetTemp.reset_index(drop=True)
 OptionContractData = pd.merge(OptionContractData, OptionContractSetTemp, on="wind_code", how="left")
+# 获取标的ETF数据
+UnderlyingRawData = w.wsd("510050.SH", "pre_close", START_DATE, END_DATE, "Fill=Previous;PriceAdj=F")
+UnderlyingTempData = pd.DataFrame(UnderlyingRawData.Data).T
+UnderlyingTempData.columns = UnderlyingRawData.Fields
+UnderlyingTempData['datetime'] = UnderlyingRawData.Times
+OptionContractData = pd.merge(OptionContractData, UnderlyingTempData, on='datetime', how='left')
 # 计算到期日
 OptionContractData['datetimef'] = OptionContractData['datetime'].map(lambda x: x.strftime('%Y-%m-%d'))
+
+
+# def dayscount(arrlike, startdate, enddate):
+#     return w.tdayscount(arrlike[startdate], arrlike[enddate], "").Data[0][0]
+# aa = OptionContractData.head(100)
+# aa.apply(dayscount, axis=1, startdate="datetimef", enddate="exercise_date")
+# aa.apply(option.TradeCalendar.TradeDaysCountAnnualizedForApply, axis=1,
+#          StartDate="datetimef",
+#          EndDate="exercise_date")
 OptionContractData["time"] = OptionContractData.apply(option.TradeCalendar.TradeDaysCountAnnualizedForApply, axis=1,
                                                       StartDate="datetimef",
                                                       EndDate="exercise_date")
 OptionContractData["time"] = OptionContractData["time"] + 1 / 252
-
+OptionContractData['delta'] = OptionContractData.apply(option.OptionGreeksMethod.ImpliedVolatilityForApply, axis=1,
+                                                       Direction="call_or_put",
+                                                       UnderlyingPrice="PRE_CLOSE",
+                                                       ExercisePrice="exercise_price", Time="time",
+                                                       InterestRate="InterestRate",
+                                                       DividendRate="DividendRate",
+                                                       Target="pre_settle")
