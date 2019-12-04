@@ -53,7 +53,6 @@ OptionContractData = pd.merge(OptionContractData, UnderlyingTempData, on='dateti
 # 计算到期日
 OptionContractData['datetimef'] = OptionContractData['datetime'].map(lambda x: x.strftime('%Y-%m-%d'))
 
-
 # def dayscount(arrlike, startdate, enddate):
 #     return w.tdayscount(arrlike[startdate], arrlike[enddate], "").Data[0][0]
 # aa = OptionContractData.head(100)
@@ -61,14 +60,22 @@ OptionContractData['datetimef'] = OptionContractData['datetime'].map(lambda x: x
 # aa.apply(option.TradeCalendar.TradeDaysCountAnnualizedForApply, axis=1,
 #          StartDate="datetimef",
 #          EndDate="exercise_date")
+# OptionContractData=OptionContractData.head(100)
 OptionContractData["time"] = OptionContractData.apply(option.TradeCalendar.TradeDaysCountAnnualizedForApply, axis=1,
                                                       StartDate="datetimef",
                                                       EndDate="exercise_date")
 OptionContractData["time"] = OptionContractData["time"] + 1 / 252
-OptionContractData['delta'] = OptionContractData.apply(option.OptionGreeksMethod.ImpliedVolatilityForApply, axis=1,
+OptionContractData['volatility'] = OptionContractData.apply(option.OptionGreeksMethod.ImpliedVolatilityForApply, axis=1,
+                                                            Direction="call_or_put",
+                                                            UnderlyingPrice="PRE_CLOSE",
+                                                            ExercisePrice="exercise_price", Time="time",
+                                                            InterestRate="InterestRate",
+                                                            DividendRate="DividendRate",
+                                                            Target="pre_settle")
+OptionContractData['delta'] = OptionContractData.apply(option.OptionGreeksMethod.DeltaValueForApply, axis=1,
                                                        Direction="call_or_put",
                                                        UnderlyingPrice="PRE_CLOSE",
                                                        ExercisePrice="exercise_price", Time="time",
                                                        InterestRate="InterestRate",
                                                        DividendRate="DividendRate",
-                                                       Target="pre_settle")
+                                                       Volatility="Volatility")
