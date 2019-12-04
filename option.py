@@ -7,6 +7,7 @@ import numpy as np
 from scipy.stats import norm
 import datetime as dt
 import matplotlib.pyplot as plt
+import bisect
 
 plt.style.use('ggplot')
 from mpl_toolkits.mplot3d import Axes3D
@@ -235,6 +236,23 @@ class TradeCalendar:
         return EndDateIndex - StartDateIndex + 1
 
     @classmethod
+    def TradeDaysCount1(cls, StartDate, EndDate):
+        '''
+        使用bisect包计算起始日期至终止日期的交易日天数
+        :param StartDate:
+        :param EndDate:
+        :return:
+        '''
+        trade_calendar = cls.TradeCalendarStartToEnd(StartDate, EndDate)
+        StartDateFormat = dt.datetime.strptime(StartDate, "%Y-%m-%d").date()
+        EndDateFormat = dt.datetime.strptime(EndDate, "%Y-%m-%d").date()
+        StartDateIndexLeft = bisect.bisect_left(trade_calendar, StartDateFormat)
+        # StartDateIndexRight = bisect.bisect_right(trade_calendar, StartDateFormat)
+        # EndDateIndexLeft = bisect.bisect_left(trade_calendar, EndDateFormat)
+        EndDateIndexRight = bisect.bisect_right(trade_calendar, EndDateFormat)
+        return EndDateIndexRight - StartDateIndexLeft
+
+    @classmethod
     def TradeDaysCountForApply(cls, ArrLike, StartDate, EndDate):
         '''
         计算起始日期至终止日期期间的交易日天数
@@ -258,6 +276,23 @@ class TradeCalendar:
         return EndDateIndex - StartDateIndex + 1
 
     @classmethod
+    def TradeDaysCountForApply1(cls, ArrLike, StartDate, EndDate):
+        '''
+        使用bisect包计算起始日期至终止日期的交易日天数
+        :param StartDate:
+        :param EndDate:
+        :return:
+        '''
+        trade_calendar = cls.TradeCalendarStartToEnd(ArrLike[StartDate], ArrLike[EndDate])
+        StartDateFormat = dt.datetime.strptime(ArrLike[StartDate], "%Y-%m-%d").date()
+        EndDateFormat = dt.datetime.strptime(ArrLike[EndDate], "%Y-%m-%d").date()
+        StartDateIndexLeft = bisect.bisect_left(trade_calendar, StartDateFormat)
+        # StartDateIndexRight = bisect.bisect_right(trade_calendar, StartDateFormat)
+        # EndDateIndexLeft = bisect.bisect_left(trade_calendar, EndDateFormat)
+        EndDateIndexRight = bisect.bisect_right(trade_calendar, EndDateFormat)
+        return EndDateIndexRight - StartDateIndexLeft
+
+    @classmethod
     def TradeDaysCountAnnualized(cls, StartDate, EndDate):
         '''
         计算起始日期至终止日期期间的交易日天数
@@ -265,7 +300,7 @@ class TradeCalendar:
         :param EndDate:
         :return:
         '''
-        return cls.TradeDaysCount(StartDate, EndDate) / 252
+        return cls.TradeDaysCount1(StartDate, EndDate) / 252
 
     @classmethod
     def TradeDaysCountAnnualizedForApply(cls, ArrLike, StartDate, EndDate):
@@ -276,7 +311,7 @@ class TradeCalendar:
         :param EndDate:
         :return:
         '''
-        return cls.TradeDaysCount(ArrLike[StartDate], ArrLike[EndDate]) / 252
+        return cls.TradeDaysCount1(ArrLike[StartDate], ArrLike[EndDate]) / 252
 
 
 class OptionGreeksMethod:
@@ -2018,6 +2053,7 @@ class OptionPlot:
         plt.yticks(list(range(len(OptionDataForPlot_LimitMonth))), list(OptionDataForPlot_LimitMonth.values))
 
         fig.colorbar(surf, shrink=0.5, aspect=5)
+
     @staticmethod
     def ImpliedVolatilitySurfacePlot_dropzero_limitmonth(GivenDateTime, Direction="认购"):
         '''
@@ -2076,4 +2112,3 @@ class OptionPlot:
 
 # (OptionDataForPlot.groupby("exercise_price")["ImpliedVolatility"].min()>0.001)
 # (OptionDataForPlot.groupby("exercise_price")["ImpliedVolatility"].count()<4)
-
