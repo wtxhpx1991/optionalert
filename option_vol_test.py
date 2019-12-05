@@ -106,7 +106,25 @@ OptionContractData['delta'] = OptionContractData.apply(option.OptionGreeksMethod
                                                        DividendRate="DividendRate",
                                                        Volatility="volatility")
 
+OptionContractData['deltaabs']=OptionContractData['delta'].map(abs)
 
+
+
+OptionContractData['deltagroup']=pd.cut(OptionContractData['deltaabs'],10)
+OptionContractData['timegroup']=pd.cut(OptionContractData['time'],10)
 OptionContractData.plot('delta','vol3minutes',kind='scatter')
 OptionContractData.plot('time','vol3minutes',kind='scatter')
-OptionContractData.plot('time','vol3minutes',kind='scatter')
+OptionContractData[['vol3minutes','timegroup']].boxplot(by='timegroup')
+OptionContractData[['vol3minutes','deltagroup']].boxplot(by='deltagroup')
+
+
+from mpl_toolkits.mplot3d.axes3d import Axes3D
+import matplotlib.pyplot as plt
+from matplotlib import cm
+fig = plt.figure()
+axes3d = Axes3D(fig)
+c=OptionContractData['vol3minutes']
+axes3d.scatter(OptionContractData['time'],OptionContractData['deltaabs'],OptionContractData['vol3minutes'],c=c,cmap=cm.Reds)
+axes3d.set_xlabel('time')
+axes3d.set_ylabel('deltaabs')
+axes3d.set_zlabel('vol3minutes')
